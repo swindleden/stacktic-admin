@@ -1,0 +1,5 @@
+<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stacktic">
+  <circle cx="16" cy="16" r="15" fill="#111B2E"></circle>
+  <path d="M16 16 L16 3 A13 13 0 0 1 29 16 Z" fill="#4FC7BC"></path>
+  <circle cx="16" cy="16" r="2" fill="#7FE0D3"></circle>
+</svg>

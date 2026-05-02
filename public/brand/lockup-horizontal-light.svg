@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 72" role="img" aria-label="Stacktic">
+  <defs>
+    <linearGradient id="lh-g" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#7FE0D3" stop-opacity="0"></stop>
+      <stop offset="60%" stop-color="#7FE0D3" stop-opacity=".55"></stop>
+      <stop offset="100%" stop-color="#2FA29A"></stop>
+    </linearGradient>
+    <clipPath id="lh-c"><circle cx="36" cy="36" r="28"></circle></clipPath>
+  </defs>
+  <circle cx="36" cy="36" r="30" fill="#111B2E"></circle>
+  <circle cx="36" cy="36" r="22" fill="none" stroke="#2FA29A" stroke-opacity="0.22" stroke-width="1"></circle>
+  <circle cx="36" cy="36" r="15" fill="none" stroke="#2FA29A" stroke-opacity="0.32" stroke-width="1"></circle>
+  <circle cx="36" cy="36" r="8" fill="none" stroke="#2FA29A" stroke-opacity="0.48" stroke-width="1"></circle>
+  <g clip-path="url(#lh-c)">
+    <path d="M36 36 L36 8 A28 28 0 0 1 64 36 Z" fill="url(#lh-g)"></path>
+    <line x1="36" y1="36" x2="36" y2="8" stroke="#7FE0D3" stroke-width="1.2" stroke-linecap="round"></line>
+  </g>
+  <circle cx="36" cy="36" r="2.8" fill="#7FE0D3"></circle>
+  <circle cx="36" cy="36" r="30" fill="none" stroke="#2FA29A" stroke-opacity="0.6" stroke-width="1"></circle>
+  <text x="86" y="49" font-family="Geist, Helvetica, sans-serif" font-weight="500" font-size="40" letter-spacing="-1.2" fill="#0B1220">Stacktic</text>
+</svg>

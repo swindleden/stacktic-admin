@@ -1,0 +1,47 @@
+/* ============================================================
+   Stacktic — globals.css
+   Order matters:
+     1. Tokens (CSS custom properties)
+     2. Tailwind layers (so utilities can reference tokens)
+     3. Base element overrides using tokens
+   ============================================================ */
+
+@import "../tokens/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Font family hookups — next/font writes its --font-* variables on <html>,
+   and we point the Stacktic token vars at them so everything ultimately
+   resolves to the loaded fonts. Safe fallbacks live in tokens.css.
+   App chrome uses IBM Plex Sans + IBM Plex Mono, matching the mockups. */
+:root {
+  --stk-sans:  var(--font-plex-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --stk-mono:  var(--font-plex-mono), ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Body copy + UI chrome — Geist sans, anti-aliased per brand spec. */
+html {
+  color-scheme: light dark;
+}
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--stk-sans);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+/* Focus ring that works on both themes. Uses --brand-accent so it always
+   renders with legible contrast against the current surface. */
+:focus-visible {
+  outline: 2px solid var(--brand-accent);
+  outline-offset: 2px;
+}
+
+/* Selection ink — cheap win, consistent across screens. */
+::selection {
+  background: var(--stk-teal-2);
+  color: var(--stk-ink);
+}
