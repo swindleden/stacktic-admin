@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { dbConfigured } from "@/lib/db/client";
 import { listAuditEvents } from "@/lib/db/queries/audit";
@@ -6,11 +5,25 @@ import { getOrgByPublicId, type OnboardingProgress } from "@/lib/db/queries/orgs
 import { ORG_PLAN, labelFor } from "@/lib/enums";
 import { formatDate, formatInt, relativeTime } from "@/lib/format";
 import { AdminActionsCard } from "./AdminActionsCard";
-import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LifecyclePill } from "@/components/LifecyclePill";
-import { StatCard } from "@/components/ui/StatCard";
 import { Tabs, type TabItem } from "@/components/ui/Tabs";
+import {
+  ActivityList,
+  Breadcrumbs,
+  Button,
+  Checklist,
+  DetailAvatar,
+  DetailHeader,
+  FieldList,
+  KPI,
+  KPIGrid,
+  Panel,
+  PanelBody,
+  PanelHeader,
+  type ActivityItem,
+  type ChecklistItem,
+} from "@/components/backstage";
 
 export const dynamic = "force-dynamic";
 
@@ -37,7 +50,7 @@ export default async function CompanyProfilePage({
 
   if (!dbConfigured) {
     return (
-      <Frame title="Company">
+      <Frame>
         <EmptyState
           title="Database not configured"
           body="Configure DATABASE_URL_DIRECT to view company profiles."
@@ -55,83 +68,66 @@ export default async function CompanyProfilePage({
   });
 
   return (
-    <div className="flex flex-col">
-      <header className="sticky top-0 z-10 bg-surface border-b border-border-soft px-8 py-5">
-        <div className="text-xs text-muted mb-1">
-          <Link href="/companies" className="hover:text-slate hover:underline">
-            Companies
-          </Link>{" "}
-          / <span className="text-slate">{org.name}</span>
-        </div>
-        <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <Avatar name={org.name} />
-            <div>
-              <h1 className="text-xl font-semibold text-heading flex items-center gap-3">
-                {org.name}
-                <LifecyclePill status={org.lifecycleStatus} />
-              </h1>
-              <div className="text-sm text-muted">
-                <span className="stk-mono">{org.domain ?? "—"}</span> ·{" "}
-                {labelFor(ORG_PLAN, org.plan)}
-              </div>
-            </div>
-          </div>
-          <div className="stk-mono text-[11px] text-muted-light">
-            {org.publicId}
-          </div>
-        </div>
-      </header>
+    <Frame>
+      <Breadcrumbs
+        items={[
+          { label: "Companies", href: "/companies" },
+          { label: org.name },
+        ]}
+      />
 
-      <div className="px-8 py-6">
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          <StatCard
-            label="Users in directory"
-            value={formatInt(org.employeeCount)}
-            sub={`${formatInt(org.activeEmployeeCount)} active`}
-          />
-          <StatCard
-            label="Tools detected"
-            value={formatInt(org.toolCount)}
-            sub={`${formatInt(org.activeToolCount)} active`}
-          />
-          <StatCard
-            label="Annual stack cost"
-            value="—"
-            sub="cost signals — Phase 2"
-          />
-          <StatCard
-            label="Open signals"
-            value={formatInt(org.openSignalCount)}
-            sub={
-              org.criticalSignalCount > 0
-                ? `${formatInt(org.criticalSignalCount)} critical`
-                : "none critical"
-            }
-            tone={
-              org.criticalSignalCount > 0
-                ? "bad"
-                : org.openSignalCount > 0
-                  ? "warn"
-                  : "neutral"
-            }
-          />
-        </section>
+      <DetailHeader
+        avatar={<DetailAvatar name={org.name} />}
+        title={org.name}
+        pill={<LifecyclePill status={org.lifecycleStatus} />}
+        id={org.publicId}
+        controls={
+          <>
+            <Button variant="default">Impersonate owner</Button>
+            <Button variant="default">Edit company</Button>
+          </>
+        }
+      />
 
-        <div className="mb-4">
-          <Tabs tabs={TABS} active={tab} />
-        </div>
+      <KPIGrid>
+        <KPI
+          label="Users"
+          value={formatInt(org.employeeCount)}
+          subValue={`${formatInt(org.activeEmployeeCount)} active`}
+        />
+        <KPI
+          label="Tools"
+          value={formatInt(org.toolCount)}
+          subValue={`${formatInt(org.activeToolCount)} active`}
+        />
+        <KPI
+          label="Cost (30d)"
+          value={<span className="text-muted-2">—</span>}
+          subValue="cost signals — Phase 2"
+        />
+        <KPI
+          label="Open signals"
+          value={formatInt(org.openSignalCount)}
+          subValue={
+            org.criticalSignalCount > 0
+              ? `${formatInt(org.criticalSignalCount)} critical`
+              : "none critical"
+          }
+          tone={org.criticalSignalCount > 0 ? "warn" : "default"}
+        />
+      </KPIGrid>
 
-        {tab === "overview" ? (
-          <OverviewTab org={org} recentEvents={recentEvents} />
-        ) : (
-          <EmptyState
-            title={`${TABS.find((t) => t.id === tab)?.label ?? "Tab"} — coming soon`}
-            body="This tab is scaffolded but not built out yet. Pulling it together in a follow-up pass."
-          />
-        )}
-      </div>
-    </div>
+      <Tabs tabs={TABS} active={tab} />
+
+      {tab === "overview" ? (
+        <OverviewTab org={org} recentEvents={recentEvents} />
+      ) : (
+        <EmptyState
+          title={`${TABS.find((t) => t.id === tab)?.label ?? "Tab"} — coming soon`}
+          body="This tab is scaffolded but not built out yet. Pulling it together in a follow-up pass."
+        />
+      )}
+    </Frame>
   );
 }
 
@@ -142,153 +138,98 @@ function OverviewTab({
   org: NonNullable<Awaited<ReturnType<typeof getOrgByPublicId>>>;
   recentEvents: Awaited<ReturnType<typeof listAuditEvents>>;
 }) {
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <div className="bg-surface border border-border rounded-md p-5 shadow-stk-sm">
-          <h3 className="text-sm font-semibold text-heading mb-3">Account</h3>
-          <dl className="grid grid-cols-2 gap-y-3 text-sm">
-            <Dt>Company ID</Dt>
-            <Dd>
-              <span className="stk-mono text-xs">{org.publicId}</span>
-            </Dd>
-            <Dt>Primary domain</Dt>
-            <Dd>
-              <span className="stk-mono text-xs">{org.domain ?? "—"}</span>
-            </Dd>
-            <Dt>Slug</Dt>
-            <Dd>
-              <span className="stk-mono text-xs">{org.slug}</span>
-            </Dd>
-            <Dt>Signed up</Dt>
-            <Dd>{formatDate(org.createdAt)}</Dd>
-            <Dt>Plan</Dt>
-            <Dd>{labelFor(ORG_PLAN, org.plan)}</Dd>
-            <Dt>Time zone</Dt>
-            <Dd>{org.timeZone}</Dd>
-            <Dt>Registry</Dt>
-            <Dd>
-              {org.registryEnabled
-                ? "enabled"
-                : org.registryDisabledAt
-                  ? `disabled · ${formatDate(org.registryDisabledAt)}`
-                  : "disabled"}
-            </Dd>
-            <Dt>Last active</Dt>
-            <Dd>
-              {org.lastActiveAt ? (
-                <span title={org.lastActiveAt.toISOString()}>
-                  {relativeTime(org.lastActiveAt)}
-                </span>
-              ) : (
-                <span className="text-muted-light">—</span>
-              )}
-            </Dd>
-          </dl>
-        </div>
-
-        <div className="bg-surface border border-border rounded-md p-5 shadow-stk-sm">
-          <h3 className="text-sm font-semibold text-heading mb-3">
-            Recent activity
-          </h3>
-          {recentEvents.length === 0 ? (
-            <p className="text-sm text-muted">
-              No audit events yet for this company.
-            </p>
-          ) : (
-            <ul className="text-sm divide-y divide-border-soft">
-              {recentEvents.slice(0, 8).map((evt) => (
-                <li key={evt.id} className="py-2 flex justify-between gap-4">
-                  <span className="text-slate">
-                    <span className="stk-mono text-xs">{evt.action}</span>
-                    {evt.entityType ? (
-                      <span className="text-muted-light">
-                        {" "}
-                        · {evt.entityType}
-                      </span>
-                    ) : null}
-                  </span>
-                  <span
-                    className="stk-mono text-xs text-muted-light shrink-0"
-                    title={evt.createdAt.toISOString()}
-                  >
-                    {relativeTime(evt.createdAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-6">
-        <OnboardingCard onboarding={org.onboarding} />
-        <AdminActionsCard publicId={org.publicId} />
-      </div>
-    </div>
-  );
-}
-
-function OnboardingCard({ onboarding }: { onboarding: OnboardingProgress }) {
-  const items: Array<{ key: keyof OnboardingProgress; label: string }> = [
-    { key: "companyCreated", label: "Company created" },
-    { key: "slackConnected", label: "Slack connected" },
-    { key: "googleConnected", label: "Google Workspace connected" },
-    { key: "firstTemplateConfirmed", label: "First tool template confirmed" },
-    { key: "ownerAssigned", label: "Owner assigned to ≥1 tool" },
+  const accountFields = [
+    { label: "Company ID", value: org.publicId, mono: true },
+    { label: "Primary domain", value: org.domain ?? "—", mono: true },
+    { label: "Slug", value: org.slug, mono: true },
+    { label: "Signed up", value: formatDate(org.createdAt) },
+    { label: "Plan", value: labelFor(ORG_PLAN, org.plan) },
+    { label: "Time zone", value: org.timeZone },
+    {
+      label: "Registry",
+      value: org.registryEnabled
+        ? "enabled"
+        : org.registryDisabledAt
+          ? `disabled · ${formatDate(org.registryDisabledAt)}`
+          : "disabled",
+    },
+    {
+      label: "Last active",
+      value: org.lastActiveAt ? (
+        <span title={org.lastActiveAt.toISOString()}>
+          {relativeTime(org.lastActiveAt)}
+        </span>
+      ) : (
+        <span className="text-muted-2">—</span>
+      ),
+    },
   ];
 
+  const activityItems: ActivityItem[] = recentEvents.slice(0, 8).map((evt) => ({
+    event: evt.action,
+    scope: evt.entityType ?? undefined,
+    actor: evt.actorEmail ?? undefined,
+    at: relativeTime(evt.createdAt),
+    atTitle: evt.createdAt.toISOString(),
+  }));
+
+  const checklist = onboardingChecklist(org.onboarding);
+
   return (
-    <div className="bg-surface border border-border rounded-md p-5 shadow-stk-sm">
-      <h3 className="text-sm font-semibold text-heading mb-3">Onboarding</h3>
-      <ul className="text-sm space-y-2">
-        {items.map((item) => {
-          const done = onboarding[item.key];
-          return (
-            <li
-              key={item.key}
-              className={[
-                "flex items-center gap-2",
-                done ? "text-slate" : "text-muted-light",
-              ].join(" ")}
-            >
-              <span
-                aria-hidden
-                className={
-                  done ? "text-success-text" : "text-muted-light"
-                }
-              >
-                {done ? "✓" : "○"}
-              </span>
-              {item.label}
-            </li>
-          );
-        })}
-      </ul>
+    <div className="grid grid-cols-1 lg:grid-cols-[1.4fr_1fr] gap-3.5">
+      <div className="flex flex-col gap-3.5 min-w-0">
+        <Panel>
+          <PanelHeader title="Account" />
+          <PanelBody>
+            <FieldList fields={accountFields} />
+          </PanelBody>
+        </Panel>
+
+        <Panel>
+          <PanelHeader title="Recent activity" hint={`${recentEvents.length} events`} />
+          <PanelBody>
+            <ActivityList
+              items={activityItems}
+              max={6}
+              empty={<>no audit events yet for this company</>}
+            />
+          </PanelBody>
+        </Panel>
+      </div>
+
+      <div className="flex flex-col gap-3.5 min-w-0">
+        <Panel>
+          <PanelHeader title="Onboarding" hint={`${doneCount(checklist)} / ${checklist.length}`} />
+          <PanelBody>
+            <Checklist items={checklist} />
+          </PanelBody>
+        </Panel>
+
+        <Panel>
+          <PanelHeader title="Admin actions" />
+          <PanelBody>
+            <AdminActionsCard publicId={org.publicId} />
+          </PanelBody>
+        </Panel>
+      </div>
     </div>
   );
 }
 
-function Dt({ children }: { children: React.ReactNode }) {
-  return <dt className="text-muted">{children}</dt>;
-}
-function Dd({ children }: { children: React.ReactNode }) {
-  return <dd className="text-slate">{children}</dd>;
+function onboardingChecklist(p: OnboardingProgress): ChecklistItem[] {
+  return [
+    { label: "Company created", done: p.companyCreated },
+    { label: "Slack connected", done: p.slackConnected },
+    { label: "Google Workspace connected", done: p.googleConnected },
+    { label: "First tool template confirmed", done: p.firstTemplateConfirmed },
+    { label: "Owner assigned to ≥1 tool", done: p.ownerAssigned },
+  ];
 }
 
-function Frame({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex flex-col">
-      <header className="sticky top-0 z-10 bg-surface border-b border-border-soft px-8 py-5">
-        <h1 className="text-xl font-semibold text-heading">{title}</h1>
-      </header>
-      <div className="px-8 py-6">{children}</div>
-    </div>
-  );
+function doneCount(items: ChecklistItem[]): number {
+  return items.filter((i) => i.done).length;
+}
+
+function Frame({ children }: { children: React.ReactNode }) {
+  return <div className="px-9 pt-7 pb-9">{children}</div>;
 }

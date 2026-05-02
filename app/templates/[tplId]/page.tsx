@@ -4,6 +4,13 @@ import { dbConfigured } from "@/lib/db/client";
 import { getTemplateById } from "@/lib/db/queries/templates";
 import { formatInt, relativeTime } from "@/lib/format";
 import { EmptyState } from "@/components/ui/EmptyState";
+import {
+  Breadcrumbs,
+  DetailAvatar,
+  DetailHeader,
+  Pill,
+  type PillKind,
+} from "@/components/backstage";
 import { UnofficialActions } from "../UnofficialActions";
 import { EditTemplateForm } from "./EditTemplateForm";
 
@@ -41,99 +48,65 @@ export default async function TemplateDetailPage({
   const highlightTags = parseHighlight(strFromSp(sp.highlight));
 
   return (
-    <div className="flex flex-col">
-      <header className="sticky top-0 z-10 bg-surface border-b border-border-soft px-8 py-5">
-        <div className="text-xs text-muted mb-1">
-          <Link href="/templates" className="hover:text-slate hover:underline">
-            Templates
-          </Link>{" "}
-          / <span className="stk-mono text-slate">{template.slug}</span>
-        </div>
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <h1 className="text-xl font-semibold text-heading flex items-center gap-3 flex-wrap">
-              {template.name}
-              <StatusBadge status={template.status} />
-            </h1>
-            <p className="text-sm text-muted mt-1 flex items-center gap-3">
-              <span>
-                {formatInt(template.usedByCount)} org
-                {template.usedByCount === 1 ? "" : "s"} using
-              </span>
-              {template.openProblemsCount > 0 ? (
-                <Link
-                  href={`/problems?tab=active&tpl=${template.tplId}`}
-                  className="text-warning-text hover:underline"
-                >
-                  {formatInt(template.openProblemsCount)} open problem
-                  {template.openProblemsCount === 1 ? "" : "s"}
-                </Link>
-              ) : null}
-              <span>
-                Updated{" "}
-                <span title={template.updatedAt.toISOString()}>
-                  {relativeTime(template.updatedAt)}
-                </span>
-              </span>
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <UnofficialActions tplId={template.tplId} />
-          </div>
-        </div>
-      </header>
+    <Frame>
+      <Breadcrumbs
+        items={[
+          { label: "Templates", href: "/templates" },
+          { label: template.slug },
+        ]}
+      />
 
-      <div className="px-8 py-6">
-        <EditTemplateForm
-          template={template}
-          highlightTags={highlightTags}
-        />
+      <DetailHeader
+        avatar={<DetailAvatar name={template.name} />}
+        title={template.name}
+        pill={<StatusPill status={template.status} />}
+        id={template.slug}
+        controls={<UnofficialActions tplId={template.tplId} />}
+      />
+
+      <div className="flex items-center gap-4 -mt-2 mb-6 font-mono text-[11.5px] text-muted tracking-[0.02em]">
+        <span>
+          {formatInt(template.usedByCount)} org{template.usedByCount === 1 ? "" : "s"} using
+        </span>
+        {template.openProblemsCount > 0 ? (
+          <Link
+            href={`/problems?tab=active&tpl=${template.tplId}` as never}
+            className="text-amber hover:underline"
+          >
+            {formatInt(template.openProblemsCount)} open problem{template.openProblemsCount === 1 ? "" : "s"}
+          </Link>
+        ) : null}
+        <span>
+          Updated{" "}
+          <span title={template.updatedAt.toISOString()}>
+            {relativeTime(template.updatedAt)}
+          </span>
+        </span>
       </div>
-    </div>
+
+      <EditTemplateForm template={template} highlightTags={highlightTags} />
+    </Frame>
   );
 }
 
-// ── Badges ───────────────────────────────────────────────────────────────
+// ── Pills ─────────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: number }) {
-  const meta = statusBadgeMeta(status);
-  return (
-    <span
-      className={[
-        "inline-block px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide border",
-        meta.className,
-      ].join(" ")}
-    >
-      {meta.label}
-    </span>
-  );
+function StatusPill({ status }: { status: number }) {
+  const meta = statusMeta(status);
+  return <Pill kind={meta.kind}>{meta.label}</Pill>;
 }
 
-function statusBadgeMeta(status: number): { label: string; className: string } {
-  // Tracks `ToolTemplateStatus` in lib/db/enums after the Phase 1
-  // catalog refactor: Active=1, Ignored=2. The pre-refactor mapping
-  // (Pending=1, Approved=2, Ignored=3) caused new operator-cataloged
-  // templates to render as "Pending" because catalogObservation writes
-  // status=1 (=Active under the new enum, =Pending under the old).
-  // Templates can't be Pending anymore — every catalog row exists
-  // because an operator committed to it; `tool_observations` is the
-  // pre-commit triage queue.
+function statusMeta(status: number): { label: string; kind: PillKind } {
+  // Active=1, Ignored=2 (post-Phase-1-catalog refactor). Templates can't
+  // be Pending — every catalog row exists because an operator committed
+  // to it; tool_observations is the pre-commit triage queue.
   switch (status) {
     case 1:
-      return {
-        label: "Active",
-        className: "bg-success-soft text-success-text border-success-border",
-      };
+      return { label: "active", kind: "active" };
     case 2:
-      return {
-        label: "Ignored",
-        className: "bg-bg-warm text-muted border-border-soft",
-      };
+      return { label: "ignored", kind: "ignored" };
     default:
-      return {
-        label: `?${status}`,
-        className: "bg-bg-warm text-muted border-border-soft",
-      };
+      return { label: `?${status}`, kind: "neutral" };
   }
 }
 
@@ -154,12 +127,5 @@ function parseHighlight(raw: string | undefined): string[] {
 }
 
 function Frame({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col">
-      <header className="sticky top-0 z-10 bg-surface border-b border-border-soft px-8 py-5">
-        <h1 className="text-xl font-semibold text-heading">Template</h1>
-      </header>
-      <div className="px-8 py-6">{children}</div>
-    </div>
-  );
+  return <div className="px-9 pt-7 pb-9">{children}</div>;
 }

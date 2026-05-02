@@ -273,20 +273,49 @@ export async function deleteErroredJobs(
    ══════════════════════════════════════════════════════════════════════ */
 
 /**
- * Delete every unlocked job in the worker schema, regardless of task
- * or queue. The full clean-slate button. Locked (running) jobs are
- * left alone — the worker that owns them keeps its lease.
+ * Delete every job in the worker schema. True clean-slate button —
+ * unlike `purgeTaskJobs` and `purgeQueueJobs`, this also yanks rows
+ * regardless of `locked_at`. Common case: a worker died holding a lock,
+ * the job has retried itself into a permanent-failure loop, the
+ * operator has stopped the worker, and they want it GONE without
+ * waiting through graphile-worker's 4-hour stale-lock timeout.
+ *
+ * Sequencing: clear all queue locks first, then clear all job locks,
+ * then delete. The lock clears matter when this is run while a worker
+ * is still alive — without them the worker holds an in-memory pointer
+ * to a deleted row and emits noisy errors on next tick. Restart the
+ * worker after this for a clean slate.
+ *
+ * Don't reach for this in production. It exists so dogfooding the
+ * worker pipeline doesn't require dropping the graphile_worker schema
+ * in psql every other day.
  */
 export async function purgeAllJobs(): Promise<JobActionResult> {
   if (!sql) return notConfigured();
 
   console.info("[backstage] purgeAllJobs");
 
-  const rows = await sql<{ id: number }[]>`
-    delete from graphile_worker._private_jobs
-    where locked_at is null
-    returning id
-  `;
+  const rows = await sql.begin(async (tx) => {
+    // Clear queue-level locks so any next worker tick won't try to
+    // re-claim a queue whose jobs are about to disappear.
+    await tx`
+      update graphile_worker._private_job_queues
+      set locked_at = null, locked_by = null
+      where locked_at is not null
+    `;
+
+    // Same for job-level locks.
+    await tx`
+      update graphile_worker._private_jobs
+      set locked_at = null, locked_by = null
+      where locked_at is not null
+    `;
+
+    return tx<{ id: number }[]>`
+      delete from graphile_worker._private_jobs
+      returning id
+    `;
+  });
 
   revalidatePath("/jobs");
   return {
@@ -294,8 +323,8 @@ export async function purgeAllJobs(): Promise<JobActionResult> {
     affected: rows.length,
     message:
       rows.length > 0
-        ? `Purged ${rows.length} job(s) across all tasks.`
-        : `Nothing to purge — every job is currently locked or the queue was already empty.`,
+        ? `Purged ${rows.length} job(s) across all tasks. Restart the worker for a clean slate.`
+        : `Nothing to purge — the queue was already empty.`,
   };
 }
 

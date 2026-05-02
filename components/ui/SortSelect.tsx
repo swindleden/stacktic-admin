@@ -8,41 +8,55 @@ export interface SortOption {
 }
 
 /**
- * Dropdown that pushes its selection to ?sort= in the URL. Server pages read
- * the value via searchParams and apply ORDER BY accordingly.
+ * Native <select> styled to match the Backstage SelectTrigger. Pushes the
+ * selection into a URL query param (default `?sort=`) so server pages can
+ * read it via searchParams. Resets `?page` on change so a sort flip doesn't
+ * stick the user on a now-empty page.
+ *
+ * Pass `param="status"` (etc.) when reusing this for filter dropdowns.
  */
 export function SortSelect({
   options,
   defaultValue,
+  param = "sort",
 }: {
   options: SortOption[];
   defaultValue?: string;
+  param?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   const current =
-    searchParams.get("sort") ?? defaultValue ?? options[0]?.value ?? "";
+    searchParams.get(param) ?? defaultValue ?? options[0]?.value ?? "";
 
   function onChange(value: string) {
     const params = new URLSearchParams(searchParams);
-    params.set("sort", value);
+    if (value === "" || value === defaultValue) {
+      params.delete(param);
+    } else {
+      params.set(param, value);
+    }
     params.delete("page");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    const qs = params.toString();
+    router.replace((qs ? `${pathname}?${qs}` : pathname) as never, { scroll: false });
   }
 
   return (
-    <select
-      value={current}
-      onChange={(e) => onChange(e.target.value)}
-      className="px-3 py-1.5 border border-border rounded-md text-sm bg-surface text-slate focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent"
-    >
-      {options.map((opt) => (
-        <option key={opt.value} value={opt.value}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+    <div className="relative">
+      <select
+        value={current}
+        onChange={(e) => onChange(e.target.value)}
+        className="appearance-none bg-paper-4 border border-line rounded px-3 pr-8 py-1.5 font-mono text-[12.5px] text-ink-2 hover:bg-paper-3 cursor-pointer focus:outline-none focus:border-line-strong"
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+      <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-2 text-[12px]">⌄</span>
+    </div>
   );
 }

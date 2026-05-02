@@ -69,12 +69,12 @@ function ActionButton({
 
   const sizeClass =
     size === "xs"
-      ? "px-2 py-1 text-[11px]"
-      : "px-3 py-1.5 text-xs";
+      ? "px-2 py-1 text-[10.5px]"
+      : "px-2.5 py-1 text-[11px]";
   const toneClass =
     tone === "danger"
-      ? "border-critical-border text-critical-text hover:bg-critical-soft"
-      : "border-border text-slate hover:bg-bg-warm";
+      ? "border-danger/30 text-danger hover:bg-danger-tint"
+      : "border-line text-muted hover:text-ink hover:bg-paper-3";
 
   return (
     <span className="inline-flex items-center gap-2">
@@ -83,7 +83,7 @@ function ActionButton({
         onClick={run}
         disabled={pending}
         className={[
-          "inline-flex items-center rounded-md border bg-surface stk-mono uppercase tracking-snug transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+          "inline-flex items-center rounded-sm border bg-paper-4 font-mono tracking-[0.04em] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-60",
           sizeClass,
           toneClass,
         ].join(" ")}
@@ -93,8 +93,8 @@ function ActionButton({
       {result ? (
         <span
           className={[
-            "text-[11px]",
-            result.ok ? "text-success-text" : "text-critical-text",
+            "font-mono text-[10.5px]",
+            result.ok ? "text-teal" : "text-danger",
           ].join(" ")}
         >
           {result.message}
@@ -139,9 +139,10 @@ export function QueueActions({
 
 /**
  * Purge-all sits in the page header and ignores task/queue scope.
- * Renders nothing when there are zero jobs to purge — the page passes
- * `enabled` based on the task summary so we don't surface a no-op
- * button on an already-empty queue.
+ * Renders nothing when there are zero jobs in the queue. The action
+ * clears queue + job locks before deleting so a stale-locked stuck
+ * job (worker dead but lock still held) doesn't hide the button — the
+ * page enables this whenever ANY job exists, locked or not.
  */
 export function PurgeAllAction({ enabled }: { enabled: boolean }) {
   if (!enabled) return null;
@@ -150,7 +151,7 @@ export function PurgeAllAction({ enabled }: { enabled: boolean }) {
       label="Purge all"
       tone="danger"
       size="sm"
-      confirm="Delete every unlocked job in graphile_worker, across all tasks and queues? Locked (running) jobs are left alone. This is the clean-slate button — use only on dev / when you really mean it."
+      confirm="Delete every job in graphile_worker, across all tasks and queues — including locked / running ones. Queue + job locks are cleared first so any live worker doesn't hold pointers to deleted rows. Restart the worker afterward. Use only on dev / when you really mean it."
       fn={() => purgeAllJobs()}
     />
   );

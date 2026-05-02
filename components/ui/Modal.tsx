@@ -7,6 +7,9 @@ import type { ReactNode } from "react";
  * Lightweight modal — no portal lib. Renders absolutely on top of the page
  * with a click-to-dismiss overlay. ESC closes. Body scroll is locked while
  * open. Used for AI Classify and New Template flows on the Templates page.
+ *
+ * Visual chrome matches the Backstage panel system (paper-4 fill, line
+ * border, paper-3 header strip).
  */
 export function Modal({
   open,
@@ -46,35 +49,35 @@ export function Modal({
       role="dialog"
       aria-modal="true"
       aria-label={title}
-      className="fixed inset-0 z-40 grid place-items-center bg-black/40"
+      className="fixed inset-0 z-40 grid place-items-center bg-ink/40 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="bg-surface rounded-md shadow-stk-lg border border-border"
+        className="bg-paper-4 rounded-md shadow-stk-lg border border-line overflow-hidden"
         style={{ width }}
       >
-        <header className="px-5 py-4 border-b border-border-soft flex items-start justify-between gap-4">
+        <header className="bg-paper-3 px-5 py-3 border-b border-line flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-heading">{title}</h2>
+            <h2 className="font-serif text-[22px] font-normal tracking-[-0.015em] leading-none text-ink">
+              {title}
+            </h2>
             {subtitle ? (
-              <p className="mt-0.5 text-xs text-muted">{subtitle}</p>
+              <p className="mt-1.5 font-mono text-[11.5px] text-muted">{subtitle}</p>
             ) : null}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-muted-light hover:text-slate text-lg leading-none"
+            className="text-muted-2 hover:text-ink text-[16px] leading-none"
           >
             ✕
           </button>
         </header>
         <div className="px-5 py-4">{children}</div>
         {footer ? (
-          <footer className="px-5 py-3 border-t border-border-soft">
-            {footer}
-          </footer>
+          <footer className="px-5 py-3 border-t border-line bg-paper-3">{footer}</footer>
         ) : null}
       </div>
     </div>

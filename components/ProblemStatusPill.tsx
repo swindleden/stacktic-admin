@@ -1,25 +1,21 @@
 import { PROBLEM_STATUS, labelFor } from "@/lib/enums";
+import { Pill, type PillKind } from "@/components/backstage";
 
-const TONE_FOR_STATUS: Record<number, string> = {
-  1: "bg-warning-soft text-warning-text border-warning-border", // open
-  2: "bg-teal-soft text-teal-deep border-border-soft", // acknowledged
-  3: "bg-success-soft text-success-text border-success-border", // resolved
-  4: "bg-surface-subtle text-muted border-border-soft", // dismissed
+/**
+ * Maps PROBLEM_STATUS enum values onto the Backstage Pill primitive.
+ *  1 = open         → amber
+ *  2 = acknowledged → neutral
+ *  3 = resolved     → teal/active
+ *  4 = dismissed    → neutral
+ */
+const KIND_FOR_STATUS: Record<number, PillKind> = {
+  1: "open",
+  2: "neutral",
+  3: "resolved",
+  4: "ignored",
 };
 
 export function ProblemStatusPill({ status }: { status: number }) {
-  const tone =
-    TONE_FOR_STATUS[status] ??
-    "bg-surface-subtle text-muted border-border-soft";
-  return (
-    <span
-      className={[
-        "inline-flex items-center px-2 py-0.5 rounded-sm border",
-        "text-[11px] font-medium",
-        tone,
-      ].join(" ")}
-    >
-      {labelFor(PROBLEM_STATUS, status)}
-    </span>
-  );
+  const kind = KIND_FOR_STATUS[status] ?? "neutral";
+  return <Pill kind={kind}>{labelFor(PROBLEM_STATUS, status).toLowerCase()}</Pill>;
 }

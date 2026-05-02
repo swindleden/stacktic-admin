@@ -32,6 +32,7 @@ import {
   tableBodyRowClass,
   tableHeadClass,
 } from "@/components/ui/TableCard";
+import { CellMono, PageHead } from "@/components/backstage";
 import { TemplatesHeaderActions } from "./TemplatesHeaderActions";
 import { IgnoreObservationButton } from "./observations/IgnoreObservationButton";
 
@@ -89,52 +90,48 @@ export default async function TemplatesPage({ searchParams }: Props) {
         ? IGNORED_SORT_OPTIONS
         : OBSERVATION_SORT_OPTIONS;
 
+  const subtitle = `${formatInt(tplCounts.approved)} approved · ${formatInt(obsCounts.pending)} pending observations · ${formatInt(tplCounts.ignored)} ignored`;
+
   return (
-    <div className="flex flex-col">
-      <header className="sticky top-0 z-10 bg-surface border-b border-border-soft px-8 py-5 flex items-center justify-between gap-6">
-        <div>
-          <h1 className="text-xl font-semibold text-heading">Templates</h1>
-          <p className="text-sm text-muted">
-            Catalog of officially supported tools, plus the observation
-            queue of customer-detected names awaiting your triage.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <TemplatesHeaderActions />
-        </div>
-      </header>
+    <div className="px-9 pt-7 pb-9">
+      <PageHead
+        title="Templates"
+        subtitle={subtitle}
+        controls={<TemplatesHeaderActions />}
+      />
 
-      <div className="px-8 py-6">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <Tabs tabs={tabs} active={tab} />
-          <div className="flex items-center gap-2 pb-2">
-            <SearchInput placeholder={searchPlaceholder(tab)} />
-            <SortSelect
-              options={sortOptions}
-              defaultValue={sortOptions[0]!.value}
-            />
-          </div>
+      {/*
+        The outer `-mb-[14px]` nestles the tabs underline against the
+        table top border. The inner `pb-6` lifts the search + sort
+        controls clear of that nestled position so they don't overlap
+        the table card. Without enough pb here, the right-side
+        controls (which are taller than the tab text and align to
+        the row's `items-end` baseline) end up sitting on top of the
+        table's first row.
+      */}
+      <div className="flex items-end justify-between gap-4 -mb-[14px]">
+        <Tabs tabs={tabs} active={tab} />
+        <div className="flex items-center gap-2 pb-6">
+          <SearchInput placeholder={searchPlaceholder(tab)} />
+          <SortSelect
+            options={sortOptions}
+            defaultValue={sortOptions[0]!.value}
+          />
         </div>
-
-        {!dbConfigured ? (
-          <EmptyState
-            title="Database not configured"
-            body="Configure DATABASE_URL_DIRECT to load templates."
-          />
-        ) : tab === "approved" ? (
-          <ApprovedTab sp={sp} q={q} sort={sort} page={page} />
-        ) : tab === "ignored" ? (
-          <IgnoredTab sp={sp} q={q} sort={sort} page={page} />
-        ) : (
-          <ObservationsTab
-            sp={sp}
-            q={q}
-            sort={sort}
-            channel={channel}
-            page={page}
-          />
-        )}
       </div>
+
+      {!dbConfigured ? (
+        <EmptyState
+          title="Database not configured"
+          body="Configure DATABASE_URL_DIRECT to load templates."
+        />
+      ) : tab === "approved" ? (
+        <ApprovedTab sp={sp} q={q} sort={sort} page={page} />
+      ) : tab === "ignored" ? (
+        <IgnoredTab sp={sp} q={q} sort={sort} page={page} />
+      ) : (
+        <ObservationsTab sp={sp} q={q} sort={sort} channel={channel} page={page} />
+      )}
     </div>
   );
 }
@@ -191,7 +188,7 @@ async function ObservationsTab({
         />
       }
     >
-      <table className="w-full text-sm">
+      <table className="w-full">
         <thead className={tableHeadClass}>
           <tr>
             <Th>Observation</Th>
@@ -220,50 +217,46 @@ function ObservationRow({ row }: { row: ObservationGroupRow }) {
       <Td>
         <Link
           href={drillInHref}
-          className="font-medium text-heading hover:text-link hover:underline"
+          className="font-semibold text-ink hover:text-teal tracking-[-0.005em]"
         >
           {row.sampleDisplayText}
         </Link>
-        <div className="stk-mono text-[10.5px] text-muted-light mt-0.5">
+        <div className="font-mono text-[10.5px] text-muted-2 mt-0.5">
           {row.normalizedName}
         </div>
       </Td>
       <Td>
-        <ChannelBadges
-          anyManual={row.anyManual}
-          anyOauth={row.anyOauth}
-        />
+        <ChannelBadges anyManual={row.anyManual} anyOauth={row.anyOauth} />
       </Td>
       <TdNum>{formatInt(row.orgCount)}</TdNum>
       <Td>
         {row.distinctClientIds === 0 ? (
-          <span className="text-xs text-muted-light">—</span>
+          <CellMono tone="muted">—</CellMono>
         ) : row.distinctClientIds === 1 ? (
-          <span
-            className="stk-mono text-[10.5px] text-muted"
-            title={row.sampleClientId ?? undefined}
-          >
-            {truncate(row.sampleClientId ?? "", 18)}
-          </span>
+          <CellMono tone="muted">
+            <span title={row.sampleClientId ?? undefined}>
+              {truncate(row.sampleClientId ?? "", 18)}
+            </span>
+          </CellMono>
         ) : (
-          <span className="text-xs text-warning-text" title="Multiple distinct OAuth client IDs across orgs — may be different vendors with the same display name.">
+          <span
+            className="font-mono text-[11.5px] text-amber"
+            title="Multiple distinct OAuth client IDs across orgs — may be different vendors with the same display name."
+          >
             {row.distinctClientIds} distinct
           </span>
         )}
       </Td>
       <Td>
-        <span
-          className="text-muted text-xs"
-          title={row.lastSeenAt.toISOString()}
-        >
-          {relativeTime(row.lastSeenAt)}
-        </span>
+        <CellMono tone="muted">
+          <span title={row.lastSeenAt.toISOString()}>{relativeTime(row.lastSeenAt)}</span>
+        </CellMono>
       </Td>
       <Td>
-        <div className="flex justify-end gap-1">
+        <div className="flex justify-end gap-1.5">
           <Link
             href={drillInHref}
-            className="text-xs px-2 py-1 rounded border border-border text-slate hover:bg-bg-warm"
+            className="font-mono text-[11px] px-2.5 py-1 rounded-sm border border-line bg-paper-4 text-muted hover:text-ink"
           >
             Triage
           </Link>
@@ -274,22 +267,16 @@ function ObservationRow({ row }: { row: ObservationGroupRow }) {
   );
 }
 
-function ChannelBadges({
-  anyManual,
-  anyOauth,
-}: {
-  anyManual: boolean;
-  anyOauth: boolean;
-}) {
+function ChannelBadges({ anyManual, anyOauth }: { anyManual: boolean; anyOauth: boolean }) {
   return (
     <div className="flex gap-1">
       {anyManual ? (
-        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide bg-warning-soft text-warning-text border border-warning-border">
+        <span className="font-mono text-[10px] tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-amber-tint text-amber">
           Manual
         </span>
       ) : null}
       {anyOauth ? (
-        <span className="inline-block px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wide bg-info-soft text-info-text border border-info-border">
+        <span className="font-mono text-[10px] tracking-[0.06em] uppercase px-1.5 py-px rounded-sm bg-teal-1/10 text-teal">
           OAuth
         </span>
       ) : null}
@@ -384,7 +371,7 @@ function renderTemplateListing({
         />
       }
     >
-      <table className="w-full text-sm">
+      <table className="w-full">
         <thead className={tableHeadClass}>
           <tr>
             <Th>Template</Th>
@@ -400,35 +387,26 @@ function renderTemplateListing({
             <tr key={row.tplId} className={tableBodyRowClass}>
               <Td>
                 <Link
-                  href={`/templates/${row.tplId}`}
-                  className="font-medium text-heading hover:text-link hover:underline"
+                  href={`/templates/${row.tplId}` as Route}
+                  className="font-semibold text-ink hover:text-teal tracking-[-0.005em]"
                 >
                   {row.name}
                 </Link>
               </Td>
               <Td>
-                <span className="stk-mono text-xs text-muted">
-                  {row.domain ?? "—"}
-                </span>
+                <CellMono tone="muted">{row.domain ?? "—"}</CellMono>
               </Td>
               <Td>
-                <span className="text-slate text-sm">
-                  {row.category ?? "—"}
-                </span>
+                <span className="text-[13px] text-ink-2">{row.category ?? "—"}</span>
               </Td>
               <Td>
-                <span className="text-xs text-muted">
-                  {row.signals.join(" · ")}
-                </span>
+                <CellMono tone="muted">{row.signals.join(" · ")}</CellMono>
               </Td>
               <TdNum>{formatInt(row.usedByCount)}</TdNum>
               <Td>
-                <span
-                  className="text-muted text-xs"
-                  title={row.updatedAt.toISOString()}
-                >
-                  {relativeTime(row.updatedAt)}
-                </span>
+                <CellMono tone="muted">
+                  <span title={row.updatedAt.toISOString()}>{relativeTime(row.updatedAt)}</span>
+                </CellMono>
               </Td>
             </tr>
           ))}
@@ -487,7 +465,6 @@ function buildQs(params: Record<string, string | string[] | undefined>) {
 
 function parseTab(s: string | undefined): TabId {
   if (s === "approved" || s === "ignored") return s;
-  // Default + legacy aliases ("pending" was the prior tab name).
   return "observations";
 }
 

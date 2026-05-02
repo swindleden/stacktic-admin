@@ -1,30 +1,27 @@
 import type { LifecycleStatus } from "@/lib/db/queries/orgs";
+import { Pill, type PillKind } from "@/components/backstage";
 
-const TONE: Record<LifecycleStatus, string> = {
-  active: "bg-success-soft text-success-text border-success-border",
-  onboarding: "bg-teal-soft text-teal-deep border-border-soft",
-  stalled: "bg-warning-soft text-warning-text border-warning-border",
-  suspended: "bg-warning-soft text-warning-text border-warning-border",
-  canceled: "bg-critical-soft text-critical-text border-critical-border",
+/**
+ * Maps the operator-side lifecycle status onto the Backstage Pill primitive.
+ * `active` → green dot, `onboarding/trial` → neutral, `stalled` → amber,
+ * `suspended/canceled` → red. Tone semantics mirror the rest of Backstage.
+ */
+const KIND: Record<LifecycleStatus, PillKind> = {
+  active:     "active",
+  onboarding: "onboarding",
+  stalled:    "stalled",
+  suspended:  "suspended",
+  canceled:   "canceled",
 };
 
 const LABEL: Record<LifecycleStatus, string> = {
-  active: "Active",
-  onboarding: "Onboarding",
-  stalled: "Stalled",
-  suspended: "Suspended",
-  canceled: "Canceled",
+  active:     "active",
+  onboarding: "onboarding",
+  stalled:    "stalled",
+  suspended:  "suspended",
+  canceled:   "canceled",
 };
 
 export function LifecyclePill({ status }: { status: LifecycleStatus }) {
-  return (
-    <span
-      className={[
-        "inline-flex items-center px-2 py-0.5 rounded-sm border text-[11px] font-medium",
-        TONE[status],
-      ].join(" ")}
-    >
-      {LABEL[status]}
-    </span>
-  );
+  return <Pill kind={KIND[status]}>{LABEL[status]}</Pill>;
 }
