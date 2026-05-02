@@ -1,81 +1,79 @@
 /**
- * Stacktic — Tailwind config snippet
+ * Stacktic — Tailwind theme (Backstage)
  *
- * Merge into your tailwind.config.ts. Overrides the default palette
- * and extends the theme with Stacktic's tokens. Disabling the default
- * palette is intentional: it prevents contributors from reaching for
- * `blue-500` / `gray-800` / etc. when they should be using a token.
+ * Replaces the palette wholesale with the Backstage handoff token names.
+ * All chrome flips with [data-theme="dark"] via CSS variables in tokens.css
+ * (Midnight palette). Component code is theme-agnostic — write `bg-paper`,
+ * `text-ink`, `bg-teal-1/10` and the right values render in either theme.
  *
- * ────────────────────────────────────────────────────────────────
- * Dark mode convention (read before adding new UI):
+ * Color shape:
+ *  • Solid var-backed: `paper`, `surface`, `sidebar`, `border` — plain
+ *    `var(--xxx)`. Cheap, no opacity modifiers.
+ *  • RGB-triplet var-backed: `ink`, `teal`, `teal-1`, `teal-2`, `mint`,
+ *    `amber`, `danger`, `muted` — `rgb(var(--xxx-rgb) / <alpha-value>)`.
+ *    Use these when you need `bg-teal-1/10`, `text-ink/60`, etc.
+ *  • Hex constants: `white`, `black`, `info`. Don't flip with theme.
  *
- *  • Chrome tokens (bg, surface, sidebar, border, muted, slate,
- *    heading, etc.) are backed by CSS custom properties that flip
- *    under [data-theme="dark"] — see tokens/tokens.css. Use these
- *    for anything describing a surface, border, or neutral text.
- *    They get dark mode for free.
- *
- *  • Brand tokens (navy, teal, ink, mint, paper) stay hex. They are
- *    intentional anchors that don't swap with theme — primary CTAs,
- *    marketing surfaces, logo fills.
- *
- *  • Severity tokens (success/warning/critical) ARE var-backed. The
- *    signal meaning is tied to the hue, but a cream `warning-soft`
- *    banner on a dark surface reads as a bug, not a signal. Light
- *    and dark values both come from handoff/mockups/.
- *
- *  • Need a shade that isn't here? Add a token first (BRAND.md §Don't).
- *    Prefer var-backed chrome over a new hex unless the value is
- *    explicitly meant to stay constant in both themes.
- * ────────────────────────────────────────────────────────────────
+ * Back-compat:
+ *  Legacy semantic names (`bg`, `surface`, `slate`, `heading`, `link`,
+ *  `success`/`warning`/`critical`, `navy`) stay defined so pages that
+ *  haven't been restyled yet still build. They map onto the Backstage
+ *  palette and flip with theme. Remove these once every route is on
+ *  Backstage primitives.
  */
 
 import type { Config } from "tailwindcss";
 
 export const stackticTheme: Partial<Config["theme"]> = {
-  // Replace the palette entirely. Use `colors: { ... }` (not `extend.colors`)
-  // so defaults don't bleed in. Tokens below mirror tokens.css and the app
-  // mockups at handoff/mockups/.
   colors: {
     transparent: "transparent",
     current: "currentColor",
+    inherit: "inherit",
     white: "#FFFFFF",
     black: "#000000",
 
-    // ── Brand core — stays hex. Don't flip in dark mode. ──
-    // App chrome uses these for logo fills, primary buttons, and
-    // intentional brand anchors. For headings that should flip with
-    // theme, reach for `text-heading` instead.
-    ink: "#0B1220",
-    navy: {
-      DEFAULT: "#111B2E",
-      700: "#17233F",
-      600: "#1F3357",
-      800: "#111B2E",
-      900: "#0B1220",
+    /* ── Backstage palette — primary names. ── */
+    paper: {
+      DEFAULT: "rgb(var(--paper-rgb) / <alpha-value>)",
+      2: "var(--paper-2)",
+      3: "var(--paper-3)",
+      4: "var(--paper-4)",
+    },
+    ink: {
+      DEFAULT: "rgb(var(--ink-rgb) / <alpha-value>)",
+      2: "rgb(var(--ink-2-rgb) / <alpha-value>)",
+    },
+    muted: {
+      DEFAULT: "rgb(var(--muted-rgb) / <alpha-value>)",
+      2: "var(--muted-2)",
+      light: "var(--muted-2)",  // back-compat alias
     },
     teal: {
-      DEFAULT: "#2FA29A",
-      600: "#1F7A7A",
-      500: "#2FA29A",
-      400: "#4FC7BC",
-      deep: "var(--teal-deep)",   // flips dark — active-nav count text
-      soft: "var(--teal-soft)",   // flips dark — active-nav count bg
+      DEFAULT: "rgb(var(--teal-rgb) / <alpha-value>)",
+      1: "rgb(var(--teal-1-rgb) / <alpha-value>)",
+      2: "rgb(var(--teal-2-rgb) / <alpha-value>)",
+      deep: "var(--teal-deep)",
+      soft: "var(--teal-soft)",
+      400: "var(--teal-2)",
+      500: "var(--teal-1)",
+      600: "var(--teal)",
     },
-    mint: "#7FE0D3",
-    paper: {
-      // Warm brand paper — retained for marketing contexts. App chrome uses
-      // `bg` / `surface` / `sidebar` below (cool palette per mockup).
-      DEFAULT: "#F4F1EA",
-      2: "#EAE6DC",
+    mint: "rgb(var(--mint-rgb) / <alpha-value>)",
+    amber: {
+      DEFAULT: "rgb(var(--amber-rgb) / <alpha-value>)",
+      tint: "var(--amber-tint)",
+    },
+    danger: {
+      DEFAULT: "rgb(var(--danger-rgb) / <alpha-value>)",
+      tint: "var(--danger-tint)",
+    },
+    line: {
+      DEFAULT: "var(--line)",
+      soft: "var(--line-soft)",
+      strong: "var(--line-strong)",
     },
 
-    // ── App chrome — var-backed. These flip under [data-theme="dark"]. ──
-    // `bg` drives the body background behind content. `surface` is cards.
-    // `sidebar` is the chrome panel on the left. `bg-warm` is hover/tinted row.
-    // `surface.elevated` is for pills/pinned chips that sit above cards
-    // (in light it's the same white as surface; in dark it lifts above the
-    // base surface to create hierarchy).
+    /* ── Back-compat aliases for not-yet-restyled pages. ── */
     bg: {
       DEFAULT: "var(--bg)",
       warm: "var(--bg-warm)",
@@ -86,51 +84,27 @@ export const stackticTheme: Partial<Config["theme"]> = {
       elevated: "var(--surface-elevated)",
     },
     sidebar: "var(--sidebar)",
-
-    // Borders — three weights so we can match the mockup's card vs divider
-    // vs emphasised border distinction.
     border: {
       DEFAULT: "var(--border)",
       soft: "var(--border-soft)",
       strong: "var(--border-strong)",
     },
-
-    muted: {
-      DEFAULT: "var(--muted)",
-      light: "var(--muted-light)",
-    },
-    // App body text. Mockup body copy uses #0F172A in light, #E5E7EB in
-    // dark — both resolved via `var(--text)`. Use `slate` for body copy.
     slate: "var(--text)",
-    // Heading color — flips navy (light) ↔ near-white (dark). Use this
-    // in place of `text-navy` for section titles and page H1s in app chrome.
     heading: "var(--heading)",
-
-    // Dark-mode surfaces (legacy — kept for components that were already
-    // using `dark:` utilities against light tokens. New code should prefer
-    // the var-backed chrome tokens above and skip `dark:` entirely.)
-    dark: {
-      bg: "#0F1A2E",
-      surface: "#15213A",
-      sidebar: "#0A1120",
-      warm: "#253456",
-      text: "#E6ECF5",
-      muted: "#8C9BB5",
+    navy: {
+      DEFAULT: "var(--ink)",
+      900: "var(--ink)",
+      800: "var(--ink-2)",
+      700: "var(--ink-2)",
+      600: "var(--muted)",
     },
+    link: "var(--link)",
 
-    // ── Semantic severity — var-backed so soft/text (and the base hue) can
-    // flip between themes. Light values match the old frozen hexes; dark
-    // values come from handoff/mockups/mockup_tools_dark.html (low-alpha
-    // tint for `.soft`, bright variant for the hue and text). Chrome usage
-    // (banners, pills, chips) gets dark mode for free; no `dark:` variants.
+    /* ── Severity — var-backed so soft/text/border flip with theme. ── */
     success: {
       DEFAULT: "var(--success)",
       soft: "var(--success-soft)",
       text: "var(--success-text)",
-      // `border` exists because Tailwind can't compute `/alpha` modifiers
-      // on var-backed colors without the `<alpha-value>` placeholder. Prefer
-      // `border-success-border` over `border-success/30` — the former flips
-      // per theme, the latter renders as the default border color.
       border: "var(--success-border)",
     },
     warning: {
@@ -148,24 +122,40 @@ export const stackticTheme: Partial<Config["theme"]> = {
     info: "#3BAFDA",
   },
 
+  fontFamily: {
+    sans:  ["var(--font-sans)"],
+    mono:  ["var(--font-mono)"],
+    serif: ["var(--font-serif)"],
+  },
+
   extend: {
-    fontFamily: {
-      sans: ['"IBM Plex Sans"', "-apple-system", "BlinkMacSystemFont", "sans-serif"],
-      mono: ['"IBM Plex Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
+    /* Backstage type scale — pin these instead of guessing. Default Tailwind
+       sizes (text-xs/sm/base/lg/xl/2xl) remain available for back-compat. */
+    fontSize: {
+      "label":   ["10.5px", { letterSpacing: "0.1em",   lineHeight: "1.2" }],
+      "meta":    ["11.5px", { letterSpacing: "0.005em", lineHeight: "1.3" }],
+      "mono-sm": ["12px",   { letterSpacing: "0",       lineHeight: "1.4" }],
+      "mono-md": ["12.5px", { letterSpacing: "0",       lineHeight: "1.4" }],
+      "body":    ["13.5px", { letterSpacing: "-0.005em",lineHeight: "1.55" }],
+      "h2":      ["22px",   { letterSpacing: "-0.015em",lineHeight: "1" }],
+      "kpi":     ["32px",   { letterSpacing: "-0.025em",lineHeight: "1" }],
+      "h1":      ["36px",   { letterSpacing: "-0.015em",lineHeight: "1" }],
     },
     borderRadius: {
-      sm: "6px",
-      md: "10px",
-      lg: "14px",
-      xl: "20px",
+      sm: "4px",
+      DEFAULT: "6px",
+      md: "8px",
+      lg: "10px",
+      xl: "14px",
+      "2xl": "20px",
     },
-    // Shadows are var-backed so the dark-mode override in tokens.css
-    // kicks in automatically.
     boxShadow: {
-      "stk-sm":   "var(--stk-shadow-sm)",
-      "stk-md":   "var(--stk-shadow-md)",
-      "stk-lg":   "var(--stk-shadow-lg)",
-      "glow-teal": "var(--stk-glow-teal)",
+      card:        "var(--shadow-card)",
+      "stk-sm":    "var(--shadow-card)",
+      "stk-md":    "var(--shadow-md)",
+      "stk-lg":    "var(--shadow-lg)",
+      "glow-mint": "var(--glow-teal)",
+      "glow-teal": "var(--glow-teal)",
     },
     letterSpacing: {
       tightish: "-0.005em",
@@ -174,15 +164,3 @@ export const stackticTheme: Partial<Config["theme"]> = {
     },
   },
 };
-
-// Usage (in your tailwind.config.ts):
-//
-//   import type { Config } from "tailwindcss";
-//   import { stackticTheme } from "./tokens/tailwind.config.snippet";
-//
-//   export default {
-//     content: ["./app/**\/*.{ts,tsx}", "./components/**\/*.{ts,tsx}"],
-//     darkMode: ["class", '[data-theme="dark"]'],
-//     theme: stackticTheme,
-//     plugins: [],
-//   } satisfies Config;

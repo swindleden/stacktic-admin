@@ -269,7 +269,17 @@ export function CatalogObservationForm({
             type="button"
             onClick={onCatalog}
             disabled={isPending || !name.trim() || !slug.trim()}
-            className="px-3 py-1.5 rounded-md text-sm bg-navy text-white hover:bg-ink disabled:opacity-40"
+            // Dark mode flips to teal-1 + brand glow per the
+            // decision-log "primary CTA in dark mode" rule. Light mode
+            // keeps the dark-on-light ink button. `disabled:opacity-40`
+            // applies in both themes — when the form isn't valid the
+            // button is correctly muted.
+            className={
+              "px-3 py-1.5 rounded-md text-sm bg-navy text-white hover:bg-ink " +
+              "dark:bg-teal-1 dark:text-paper dark:hover:bg-teal-2 " +
+              "dark:shadow-[var(--glow-teal)] " +
+              "disabled:opacity-40 disabled:dark:shadow-none"
+            }
           >
             {isPending
               ? "Adding…"
@@ -283,8 +293,19 @@ export function CatalogObservationForm({
   );
 }
 
+// Dark-mode additions:
+//   • `dark:bg-paper-3` — input bg drops to `paper-3` (recessed) while
+//     the form panel sits on `paper-4`, so inputs read as carved-into
+//     the surface rather than blending with it.
+//   • `dark:border-line-strong` — at-rest border bumps from 6% white
+//     overlay to 10% so input boundaries are clearly visible.
+//   • Light mode treatment is unchanged; back-compat aliases
+//     (`border-border`, `bg-surface`) keep their existing values.
 const inputCls =
-  "w-full px-3 py-2 border border-border rounded-md bg-surface text-slate placeholder:text-muted-light focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent disabled:cursor-not-allowed disabled:opacity-60";
+  "w-full px-3 py-2 border border-border rounded-md bg-surface text-slate placeholder:text-muted-light " +
+  "dark:bg-paper-3 dark:border-line-strong " +
+  "focus:outline-none focus:ring-2 focus:ring-brand-accent/30 focus:border-brand-accent " +
+  "disabled:cursor-not-allowed disabled:opacity-60";
 
 function Field({
   label,

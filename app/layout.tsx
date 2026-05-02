@@ -1,31 +1,39 @@
 import type { Metadata, Viewport } from "next";
-import { IBM_Plex_Sans, IBM_Plex_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { tokens } from "@/tokens/tokens";
 import { Sidebar } from "@/components/Sidebar";
 import { ThemeProvider } from "@/components/theme/ThemeProvider";
+import { auth } from "@/auth";
 import "@/styles/globals.css";
 
-// Font loading mirrors site-app: IBM Plex Sans + IBM Plex Mono, self-hosted at
-// build time via next/font. Variables --font-plex-sans / --font-plex-mono are
-// picked up by tokens.css to drive --stk-sans / --stk-mono.
-const plexSans = IBM_Plex_Sans({
+// Backstage type system — Geist sans + Geist Mono for chrome, Instrument
+// Serif for page titles. Loaded via next/font so they ship self-hosted.
+// CSS variable names match the references in styles/globals.css.
+const geistSans = Geist({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-plex-sans",
+  variable: "--font-geist-sans",
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
+const geistMono = Geist_Mono({
   subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex-mono",
+  weight: ["400", "500", "600"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
+
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-instrument-serif",
   display: "swap",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Stacktic Admin",
-    template: "%s — Stacktic Admin",
+    default: "Stacktic Backstage",
+    template: "%s — Stacktic Backstage",
   },
   description: "Operator console for the Stacktic team.",
   // Keep operator-console pages out of search engines, always.
@@ -41,29 +49,50 @@ export const metadata: Metadata = {
   },
 };
 
-// theme-color per Brand Guidelines § 08. Navy on light, ink on dark.
+// theme-color matches the page bg in each theme — paper in light, Midnight in dark.
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: tokens.color.navy },
-    { media: "(prefers-color-scheme: dark)", color: tokens.color.ink },
+    { media: "(prefers-color-scheme: light)", color: tokens.color.paper },
+    { media: "(prefers-color-scheme: dark)",  color: tokens.dark.paper },
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Resolve the session at the layout level. Two render shapes:
+  //   • Authenticated → Sidebar + main grid (the standard chrome).
+  //   • Unauthenticated → just the children, full-viewport (lets
+  //     /login render standalone without the Sidebar bleeding in).
+  // Middleware redirects unauthenticated users to /login before
+  // anything else, so in practice the unauthenticated branch only
+  // renders for /login itself.
+  const session = await auth();
+
   return (
     <html
       lang="en"
-      className={`${plexSans.variable} ${plexMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
       suppressHydrationWarning
     >
       <body>
         <ThemeProvider>
-          <div className="flex h-screen overflow-hidden bg-bg text-slate">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">{children}</main>
-          </div>
+          {session?.user ? (
+            <div className="font-sans text-ink bg-paper grid grid-cols-[220px_1fr] h-screen tracking-[-0.005em]">
+              <Sidebar
+                user={{
+                  name: session.user.name ?? null,
+                  email: session.user.email ?? null,
+                  image: session.user.image ?? null,
+                }}
+              />
+              <main className="overflow-auto">{children}</main>
+            </div>
+          ) : (
+            <div className="font-sans text-ink bg-paper tracking-[-0.005em]">
+              {children}
+            </div>
+          )}
         </ThemeProvider>
       </body>
     </html>

@@ -18,6 +18,9 @@ export interface TabItem {
  *   - `query` (default) — uses ?tab= and re-renders the same page.
  *   - `link`            — each tab is a real Link to a different path. Pass
  *                         `hrefFor` to build the URL.
+ *
+ * Visual chrome matches the Backstage Tabs primitive — flat underline,
+ * mono badge tint sits on paper-2/3.
  */
 export function Tabs({
   tabs,
@@ -38,46 +41,49 @@ export function Tabs({
   function selectQueryTab(id: string) {
     const params = new URLSearchParams(searchParams);
     params.set("tab", id);
-    // Clear params that don't survive tab switches: pagination resets, and
-    // sort options are tab-specific (e.g. Unofficial has companies_desc that
-    // Official doesn't). The user's q stays so a search persists.
+    // Pagination resets; sort is tab-specific. Search stays.
     params.delete("page");
     params.delete("sort");
-    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    router.replace(`${pathname}?${params.toString()}` as never, { scroll: false });
   }
 
+  // `overflow-x-auto` allows horizontal scroll on narrow viewports where
+  // the tab list would overflow. We pair it with `overflow-y-clip` to
+  // suppress the spurious vertical scrollbar browsers paint when one
+  // axis is set to auto and the other isn't explicitly constrained —
+  // sub-pixel vertical overflow from the tab buttons (focus rings,
+  // line-height rounding) was triggering a tiny y-scrollbar visible on
+  // the right edge of the tab strip.
   return (
-    <div className="border-b border-border-soft">
-      <nav className="flex gap-6 text-sm">
-        {tabs.map((tab) => {
-          const isActive = current === tab.id;
-          const className = [
-            "pb-3 cursor-pointer border-b-2 transition-colors",
-            isActive
-              ? "border-navy text-heading"
-              : "border-transparent text-muted hover:text-slate",
-          ].join(" ");
+    <div className="flex gap-6 border-b border-line mb-[22px] px-0.5 overflow-x-auto overflow-y-clip">
+      {tabs.map((tab) => {
+        const isActive = current === tab.id;
+        const className = [
+          "py-2.5 pb-3 text-[13.5px] cursor-pointer border-b-2 -mb-px tracking-[-0.005em] whitespace-nowrap",
+          isActive
+            ? "text-ink font-semibold border-ink"
+            : "text-muted border-transparent hover:text-ink-2",
+        ].join(" ");
 
-          if (hrefFor) {
-            return (
-              <Link key={tab.id} href={hrefFor(tab.id)} className={className}>
-                <TabBody label={tab.label} badge={tab.badge} active={isActive} />
-              </Link>
-            );
-          }
-
+        if (hrefFor) {
           return (
-            <button
-              key={tab.id}
-              type="button"
-              onClick={() => selectQueryTab(tab.id)}
-              className={className}
-            >
+            <Link key={tab.id} href={hrefFor(tab.id) as never} className={className}>
               <TabBody label={tab.label} badge={tab.badge} active={isActive} />
-            </button>
+            </Link>
           );
-        })}
-      </nav>
+        }
+
+        return (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => selectQueryTab(tab.id)}
+            className={className}
+          >
+            <TabBody label={tab.label} badge={tab.badge} active={isActive} />
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -97,10 +103,10 @@ function TabBody({
       {badge != null ? (
         <span
           className={[
-            "stk-mono text-[10px] px-1.5 py-0.5 rounded-sm",
+            "font-mono text-[10px] px-1.5 py-0.5 rounded-sm tracking-[0.04em]",
             active
-              ? "bg-bg-warm text-muted"
-              : "bg-surface-subtle text-muted-light",
+              ? "bg-paper-2 text-muted"
+              : "bg-paper-3 text-muted-2",
           ].join(" ")}
         >
           {badge}

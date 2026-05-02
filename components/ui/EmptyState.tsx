@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
 
 /**
- * Shared empty / informational state. Used when:
- *   - DATABASE_URL isn't configured yet (first-time local dev)
+ * Empty / informational state. Used when:
+ *   - DATABASE_URL isn't configured (first-time local dev)
  *   - A query returns zero rows
  *   - A page is intentionally a placeholder
+ *
+ * Visual chrome follows the Backstage rule: serif headline + mono subtitle,
+ * no illustration. Empty is a real state, not a missing one.
  */
 export function EmptyState({
   title,
@@ -16,10 +19,18 @@ export function EmptyState({
   footer?: ReactNode;
 }) {
   return (
-    <div className="rounded-md border border-dashed border-border bg-surface px-6 py-10 text-center">
-      <h2 className="text-base font-medium text-heading">{title}</h2>
-      {body ? <div className="mt-2 text-sm text-muted">{body}</div> : null}
-      {footer ? <div className="mt-4 text-xs text-muted-light">{footer}</div> : null}
+    <div className="rounded-md border border-line bg-paper-4 px-6 py-12 text-center">
+      <h2 className="font-serif text-[22px] font-normal tracking-[-0.015em] leading-none text-ink m-0">
+        {title}
+      </h2>
+      {body ? (
+        <div className="mt-3 font-mono text-[12px] text-muted tracking-[0.005em] max-w-md mx-auto">
+          {body}
+        </div>
+      ) : null}
+      {footer ? (
+        <div className="mt-4 font-mono text-[11px] text-muted-2">{footer}</div>
+      ) : null}
     </div>
   );
 }

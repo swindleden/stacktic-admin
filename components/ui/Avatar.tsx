@@ -1,10 +1,11 @@
 /**
- * Square avatar with initials. Mockup uses a 40px square at the top of the
- * company-detail header. We default to that size; callers can override.
+ * Square avatar with initials. Mockup uses a 36-40px square at the top of
+ * detail headers. Backstage rule: square 6px-radius for orgs and tools,
+ * circles only for human users.
  */
 export function Avatar({
   name,
-  size = 40,
+  size = 36,
 }: {
   name: string;
   size?: number;
@@ -16,7 +17,7 @@ export function Avatar({
 
   return (
     <div
-      className="rounded-md bg-surface-subtle border border-border-soft grid place-items-center text-slate font-semibold"
+      className="rounded bg-paper-2 border border-line grid place-items-center text-ink font-semibold tracking-[0.02em]"
       style={{
         width: size,
         height: size,

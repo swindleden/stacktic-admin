@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 /**
- * Renders a page picker as anchor tags. Server-side: takes total + pageSize +
- * current page, plus a function that produces hrefs (so we don't couple the
- * component to a specific URL shape).
+ * Server-side pagination — anchor-based for SSR. Visual chrome matches the
+ * Backstage Pagination primitive (mono Prev/Next, inverse-fill on the active
+ * page, ellipses with mono dots).
  *
- * Numeric window is fixed at 5 pages with sensible ellipses — matches the
- * mockup's "Prev 1 2 3 … 6 Next" pattern when there are enough pages.
+ * Sizes the page window at 5 with sensible ellipses so the row doesn't
+ * jump as the user moves through pages.
  */
 export function Pagination({
   page,
@@ -24,39 +24,20 @@ export function Pagination({
   const end = Math.min(page * pageSize, total);
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 border-t border-border-soft text-xs text-muted">
+    <div className="flex items-center justify-between gap-3 font-mono text-[11.5px] text-muted tracking-[0.02em]">
       <div>
-        Showing {start.toLocaleString()}–{end.toLocaleString()} of{" "}
-        {total.toLocaleString()}
+        Showing {start.toLocaleString()}–{end.toLocaleString()} of {total.toLocaleString()}
       </div>
-      <div className="flex items-center gap-1">
-        <PageBtn href={hrefForPage(page - 1)} disabled={page <= 1}>
-          Prev
-        </PageBtn>
+      <div className="flex items-center gap-1.5">
+        <PageBtn href={hrefForPage(page - 1)} disabled={page <= 1}>Prev</PageBtn>
         {pageWindow(page, totalPages).map((p, i) =>
           p === "…" ? (
-            <span
-              key={`gap-${i}`}
-              className="px-2 py-1 stk-mono text-muted-light"
-            >
-              …
-            </span>
+            <span key={`gap-${i}`} className="text-muted-2 px-0.5">…</span>
           ) : (
-            <PageBtn
-              key={p}
-              href={hrefForPage(p)}
-              active={p === page}
-            >
-              {p}
-            </PageBtn>
+            <PageBtn key={p} href={hrefForPage(p)} active={p === page}>{p}</PageBtn>
           ),
         )}
-        <PageBtn
-          href={hrefForPage(page + 1)}
-          disabled={page >= totalPages}
-        >
-          Next
-        </PageBtn>
+        <PageBtn href={hrefForPage(page + 1)} disabled={page >= totalPages}>Next</PageBtn>
       </div>
     </div>
   );
@@ -74,17 +55,17 @@ function PageBtn({
   disabled?: boolean;
 }) {
   const className = [
-    "px-2 py-1 border rounded transition-colors",
+    "px-2.5 py-1 border rounded-sm font-mono text-[11px]",
     active
-      ? "border-navy bg-navy text-white"
+      ? "bg-ink text-paper border-ink"
       : disabled
-        ? "border-border-soft text-muted-light cursor-not-allowed"
-        : "border-border text-slate hover:bg-bg-warm",
+        ? "bg-paper-4 border-line text-muted-2 opacity-50 cursor-not-allowed"
+        : "bg-paper-4 border-line text-muted hover:text-ink cursor-pointer",
   ].join(" ");
 
-  if (disabled) return <span className={className}>{children}</span>;
+  if (disabled || active) return <span className={className}>{children}</span>;
   return (
-    <Link href={href} className={className}>
+    <Link href={href as never} className={className}>
       {children}
     </Link>
   );

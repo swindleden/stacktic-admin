@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { ActionList, type AdminAction } from "@/components/backstage";
 import {
   type ActionResult,
   impersonateCompany,
@@ -11,23 +12,51 @@ import {
 
 type ActionId = "impersonate" | "rerun" | "audit" | "suspend";
 
-const ACTIONS: Array<{
+interface ActionDef {
   id: ActionId;
   label: string;
+  hint?: string;
+  buttonLabel: string;
   destructive?: boolean;
   confirm?: string;
-}> = [
-  { id: "impersonate", label: "Impersonate (read-only)" },
-  { id: "rerun", label: "Re-run discovery" },
-  { id: "audit", label: "View audit log" },
+}
+
+const ACTIONS: ActionDef[] = [
+  {
+    id: "impersonate",
+    label: "Impersonate (read-only)",
+    hint: "view the app as the org owner",
+    buttonLabel: "Open",
+  },
+  {
+    id: "rerun",
+    label: "Re-run discovery",
+    hint: "re-scan tools + employees",
+    buttonLabel: "Run",
+  },
+  {
+    id: "audit",
+    label: "View audit log",
+    hint: "all events for this org",
+    buttonLabel: "Open",
+  },
   {
     id: "suspend",
     label: "Suspend account",
+    hint: "lose access until re-activated · reversible",
+    buttonLabel: "Suspend",
     destructive: true,
     confirm:
       "Suspend this company? They'll lose access until you re-activate them. This is reversible.",
   },
 ];
+
+const ACTION_FNS: Record<ActionId, (publicId: string) => Promise<ActionResult>> = {
+  impersonate: impersonateCompany,
+  rerun: rerunDiscovery,
+  audit: viewAuditLog,
+  suspend: suspendCompany,
+};
 
 export function AdminActionsCard({ publicId }: { publicId: string }) {
   const [isPending, startTransition] = useTransition();
@@ -36,7 +65,6 @@ export function AdminActionsCard({ publicId }: { publicId: string }) {
 
   function run(id: ActionId, confirm?: string) {
     if (confirm && !window.confirm(confirm)) return;
-
     startTransition(async () => {
       setLastAction(id);
       const fn = ACTION_FNS[id];
@@ -45,34 +73,25 @@ export function AdminActionsCard({ publicId }: { publicId: string }) {
     });
   }
 
-  return (
-    <div className="bg-surface border border-border rounded-md p-5 shadow-stk-sm">
-      <h3 className="text-sm font-semibold text-heading mb-3">Admin actions</h3>
-      <div className="space-y-2 text-sm">
-        {ACTIONS.map((a) => (
-          <button
-            key={a.id}
-            type="button"
-            disabled={isPending && lastAction === a.id}
-            onClick={() => run(a.id, a.confirm)}
-            className={[
-              "w-full text-left px-3 py-2 border rounded-md transition-colors",
-              a.destructive
-                ? "border-critical-border text-critical-text hover:bg-critical-soft"
-                : "border-border text-slate hover:bg-bg-warm",
-              isPending && lastAction === a.id ? "opacity-60 cursor-progress" : "",
-            ].join(" ")}
-          >
-            {isPending && lastAction === a.id ? `${a.label}…` : a.label}
-          </button>
-        ))}
-      </div>
+  const adminActions: AdminAction[] = ACTIONS.map((a) => {
+    const busy = isPending && lastAction === a.id;
+    return {
+      label: a.label,
+      hint: a.hint,
+      buttonLabel: busy ? "…" : a.buttonLabel,
+      danger: a.destructive,
+      onClick: () => run(a.id, a.confirm),
+    };
+  });
 
+  return (
+    <div>
+      <ActionList actions={adminActions} />
       {result ? (
         <div
           role="status"
           className={[
-            "mt-3 text-xs px-3 py-2 rounded-md border",
+            "mt-3 font-mono text-[11.5px] px-3 py-2 rounded-sm border",
             result.ok
               ? "bg-success-soft text-success-text border-success-border"
               : "bg-warning-soft text-warning-text border-warning-border",
@@ -81,17 +100,9 @@ export function AdminActionsCard({ publicId }: { publicId: string }) {
           {result.message}
         </div>
       ) : null}
-
-      <p className="text-[11px] text-muted-light mt-3">
+      <p className="mt-3 font-mono text-[10.5px] text-muted-2 tracking-[0.04em]">
         Write paths are scaffolded — real semantics land in follow-up passes.
       </p>
     </div>
   );
 }
-
-const ACTION_FNS: Record<ActionId, (publicId: string) => Promise<ActionResult>> = {
-  impersonate: impersonateCompany,
-  rerun: rerunDiscovery,
-  audit: viewAuditLog,
-  suspend: suspendCompany,
-};

@@ -1,77 +1,85 @@
 /**
- * Stacktic — Design Tokens v1.0
- * Generated from brand/Brand Guidelines.html (authoritative)
- *
- * Import when you need a hex value at runtime (charts, canvas, inline SVG).
- * For CSS styling, prefer tokens.css custom properties.
+ * Stacktic — Design Tokens v2 (Backstage)
+ * Mirror of tokens.css for runtime use (charts, canvas, inline SVG, meta).
+ * For CSS styling, prefer tokens.css custom properties so theme flips work.
  */
 
 export const tokens = {
   color: {
-    ink:       "#0B1220",
-    navy:      "#111B2E",
-    navy2:     "#17233F",
-    navy3:     "#1F3357",
-    teal: {
-      600: "#1F7A7A",
-      500: "#2FA29A",
-      400: "#4FC7BC",
-    },
-    mint:      "#7FE0D3",
-    paper:     "#F4F1EA",
-    paper2:    "#EAE6DC",
-    white:     "#FFFFFF",
-    muted:     "#5A6A82",
-    line:         "rgba(13, 23, 38, 0.08)",
-    lineStrong:   "rgba(13, 23, 38, 0.14)",
+    /* Surfaces (light) */
+    paper:    "#FAF7F0",
+    paper2:   "#F1EDE3",
+    paper3:   "#FDFBF6",
+    paper4:   "#FFFFFE",
 
-    // Semantic severity — NOT brand colors
+    /* Text (light) */
+    ink:      "#0B1220",
+    ink2:     "#3F4A60",
+    muted:    "#5A6A82",
+    muted2:   "#8A95AB",
+
+    /* Brand */
+    teal:     "#1F7A7A",
+    teal1:    "#2FA29A",
+    teal2:    "#4FC7BC",
+    mint:     "#7FE0D3",
+
+    /* Status */
+    amber:    "#C97B3F",
+    danger:   "#B23B2D",
+
+    /* Lines */
+    line:        "rgba(13, 23, 38, 0.08)",
+    lineSoft:    "rgba(13, 23, 38, 0.04)",
+    lineStrong:  "rgba(13, 23, 38, 0.14)",
+
+    /* Severity (back-compat for chart helpers, etc.) */
     success:   "#1FA06E",
-    warning:   "#C89A4A",
-    critical:  "#C44D4D",
+    warning:   "#C97B3F",
+    critical:  "#B23B2D",
+
+    /* Legacy alias — layout.tsx themeColor still references these. */
+    navy:     "#0B1220",
+    white:    "#FFFFFF",
   },
 
-  // Dark-mode surface tokens — named so you can reach them for charts etc.
+  /* Midnight palette — for runtime callers that need the dark hex. */
   dark: {
-    bg:          "#0F1A2E",
-    bgElevated:  "#15213A",
-    surface:     "#15213A",
-    surfaceWarm: "#253456",
-    sidebar:     "#0A1120",
-    text:        "#E6ECF5",
-    textMuted:   "#8C9BB5",
+    paper:    "#0F141C",
+    paper2:   "#0B1018",
+    paper3:   "#161D28",
+    paper4:   "#1A2330",
+    ink:      "#ECEAE3",
+    ink2:     "#B4BAC6",
+    muted:    "#7E889A",
+    muted2:   "#5A6478",
+    teal:     "#4FC7BC",
+    mint:     "#7FE0D3",
+    amber:    "#E0A36A",
   },
 
   font: {
-    sans:  '"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif',
-    mono:  '"IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace',
+    sans:  '"Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    mono:  '"Geist Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
+    serif: '"Instrument Serif", "Times New Roman", serif',
   },
 
   radius: {
-    sm: 6,
-    md: 10,
-    lg: 14,
-    xl: 20,
+    sm: 4,
+    md: 6,
+    lg: 8,
+    xl: 10,
   },
 
   space: {
-    1: 4,
-    2: 8,
-    3: 12,
-    4: 16,
-    5: 20,
-    6: 24,
-    7: 32,
-    8: 40,
-    9: 56,
-    10: 80,
+    1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 7: 32, 8: 40, 9: 56, 10: 80,
   },
 
   shadow: {
-    sm: "0 1px 2px rgba(11, 18, 32, 0.04)",
-    md: "0 4px 12px rgba(11, 18, 32, 0.06), 0 1px 2px rgba(11, 18, 32, 0.04)",
-    lg: "0 12px 32px rgba(11, 18, 32, 0.10), 0 2px 6px rgba(11, 18, 32, 0.06)",
-    glowTeal: "0 0 0 1px rgba(79, 199, 188, 0.35), 0 6px 24px rgba(79, 199, 188, 0.28)",
+    card: "0 1px 2px rgba(13, 23, 38, 0.04)",
+    md:   "0 4px 14px rgba(13, 23, 38, 0.06)",
+    lg:   "0 12px 32px rgba(13, 23, 38, 0.10)",
+    glowMint: "0 0 12px rgba(127, 224, 211, 0.35)",
   },
 } as const;
 

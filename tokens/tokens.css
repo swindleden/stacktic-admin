@@ -1,318 +1,277 @@
 /* ============================================================
-   Stacktic — Design Tokens v1.1
-   Generated from brand/Brand Guidelines.html + handoff/mockups/.
-   Drop into globals.css. Do NOT add colors outside this file.
+   Stacktic — Design Tokens v2 (Backstage)
+   Sourced from backstage-handoff/. Light + Midnight dark.
 
-   Architecture (important, read before editing):
-   -------------------------------------------------------------
-   Tokens split into three layers:
+   Architecture
+   ─────────────────────────────────────────────────────────────
+   • One palette name per slot. `--paper`, `--ink`, `--teal-1`,
+     `--amber` are used directly by components — there is no
+     separate "raw vs semantic" layer. The values flip under
+     [data-theme="dark"] (Midnight) so component code is
+     theme-agnostic.
 
-   1. `--stk-*` RAW TOKENS — the palette. Hex values, never used
-      directly by components. Think of them like an artist's tubes
-      of paint.
+   • RGB triplets (`--ink-rgb`, `--teal-1-rgb`, …) exist for the
+     same colors that need Tailwind opacity modifiers
+     (`bg-teal-1/10`, `text-ink/60`). Update both the hex and
+     the triplet when changing a value.
 
-   2. Semantic aliases — `--bg`, `--surface`, `--text`, etc. These
-      are what components reach for. They map to different raw
-      tokens depending on theme. Light values live under `:root`,
-      dark values override under `[data-theme="dark"]`.
-
-   3. `--stk-shadow-*` / glow tokens — shadows are theme-aware too
-      (dark mode needs more opacity + wider blur).
-
-   The tailwind config (tokens/tailwind.config.snippet.ts) backs
-   most chrome utilities with the semantic aliases via var(), so
-   `bg-surface`, `border-border`, `text-muted`, etc. flip with
-   the theme automatically. Brand tokens (navy, teal, ink, mint,
-   paper) stay hex — those represent intentional brand anchors
-   and don't swap with theme.
+   • Back-compat aliases (`--bg`, `--surface`, `--text`,
+     `--heading`, `--border`, `--success`, `--warning`,
+     `--critical`) keep pages that haven't been restyled yet
+     working against the new palette. Remove these once every
+     page is on the Backstage primitives.
    ============================================================ */
 
 :root {
-  /* ---------- Ink & Navy (raw) ---------- */
-  --stk-ink:          #0B1220;  /* Body copy, app chrome */
-  --stk-navy:         #111B2E;  /* Mark body, nav surfaces */
-  --stk-navy-2:       #17233F;  /* Elevated cards on dark */
-  --stk-navy-3:       #1F3357;  /* Strokes, dividers on dark */
+  /* ── Surfaces (paper tier) ── */
+  --paper:    #FAF7F0;  /* page background */
+  --paper-2:  #F1EDE3;  /* sidebar, recessed surface */
+  --paper-3:  #FDFBF6;  /* table head, hover, panel header */
+  --paper-4:  #FFFFFE;  /* card, panel, input bg */
 
-  /* ---------- Teal & Mint (raw) ---------- */
-  --stk-teal:         #1F7A7A;  /* Links, subtle signal */
-  --stk-teal-1:       #2FA29A;  /* Primary actions (light) */
-  --stk-teal-2:       #4FC7BC;  /* Accents, hover */
-  --stk-mint:         #7FE0D3;  /* Live ping, active signal */
+  /* ── Ink (text) ── */
+  --ink:      #0B1220;  /* primary text */
+  --ink-2:    #3F4A60;  /* secondary text */
+  --muted:    #5A6A82;  /* metadata, labels */
+  --muted-2:  #8A95AB;  /* placeholders, disabled */
 
-  /* ---------- Neutral surfaces (raw — light) ---------- */
-  --stk-paper:        #F4F1EA;  /* Brand paper — marketing contexts only */
-  --stk-paper-2:      #EAE6DC;  /* Warmer paper, secondary surface */
-  --stk-white:        #FFFFFF;
+  /* ── Brand (teal/mint) ── */
+  --teal:     #1F7A7A;  /* on-light brand text */
+  --teal-1:   #2FA29A;  /* primary accent */
+  --teal-2:   #4FC7BC;  /* hover, soft accent */
+  --mint:     #7FE0D3;  /* glow, ping, on-dark accent */
 
-  /* ---------- App chrome surfaces (raw — cool, from mockups) ---------- */
-  --stk-bg:           #F7F9FB;  /* App body background */
-  --stk-bg-warm:      #F1F5F9;  /* Hover / tinted row */
-  --stk-surface:      #FFFFFF;  /* Cards, panels */
-  --stk-surface-subtle: #F1F5F9; /* Subtle surface (table header bg etc.) */
-  --stk-sidebar:      #E2E8F0;  /* Sidebar chrome */
-  --stk-border:       #CBD5E1;  /* Default card + divider border */
-  --stk-border-soft:  #E2E8F0;  /* Soft row divider */
-  --stk-border-strong:#94A3B8;  /* Emphasised / hover border */
-  --stk-muted-light:  #94A3B8;  /* Tertiary text */
-  --stk-slate:        #0F172A;  /* App body text (slightly cooler than ink) */
+  /* ── Status ── */
+  --amber:    #C97B3F;  /* stalled, warn */
+  --amber-tint: rgba(201, 123, 63, 0.12);
+  --danger:   #B23B2D;  /* destructive */
+  --danger-tint: rgba(178, 59, 45, 0.05);
 
-  /* ---------- Raw dark-mode chrome (sourced from
-     handoff/mockups/mockup_home_j_dark.html) ---------- */
-  --stk-dark-bg:             #0F1A2E;
-  --stk-dark-bg-warm:        #253456;
-  --stk-dark-sidebar:        #0A1120;
-  --stk-dark-surface:        #15213A;
-  --stk-dark-surface-elev:   #1B2A47;
-  --stk-dark-border:         #25334F;
-  --stk-dark-border-soft:    #1B2742;
-  --stk-dark-border-strong:  #3A4B72;
-  --stk-dark-muted:          #9CA3AF;
-  --stk-dark-muted-light:    #6B7280;
-  --stk-dark-text:           #E5E7EB;
-  --stk-dark-heading:        #F3F4F6;
-  --stk-dark-teal-soft:      #0E2A28;
+  /* ── Lines ── */
+  --line:        rgba(13, 23, 38, 0.08);
+  --line-soft:   rgba(13, 23, 38, 0.04);
+  --line-strong: rgba(13, 23, 38, 0.14);
 
-  /* ---------- Utility lines & muted text (raw) ---------- */
-  --stk-line:         rgba(13, 23, 38, 0.08);
-  --stk-line-strong:  rgba(13, 23, 38, 0.14);
-  --stk-muted:        #5A6A82;
+  /* ── RGB triplets (for Tailwind opacity modifiers) ── */
+  --paper-rgb:   250 247 240;
+  --ink-rgb:     11 18 32;
+  --ink-2-rgb:   63 74 96;
+  --muted-rgb:   90 106 130;
+  --teal-rgb:    31 122 122;
+  --teal-1-rgb:  47 162 154;
+  --teal-2-rgb:  79 199 188;
+  --mint-rgb:    127 224 211;
+  --amber-rgb:   201 123 63;
+  --danger-rgb:  178 59 45;
 
-  /* ---------- Semantic severity — sharpened from mockup ---------- */
-  --stk-success:      #22C55E;
-  --stk-success-soft: #DCFCE7;
-  --stk-success-text: #15803D;
-  --stk-warning:      #F59E0B;
-  --stk-warning-soft: #FEF6E7;
-  --stk-warning-text: #92400E;
-  --stk-critical:     #E5484D;
-  --stk-critical-soft:#FEEAEA;
-  --stk-critical-text:#B42318;
-  --stk-info:         #3BAFDA;
+  /* ── Type ── (font-family vars are wired in globals.css to
+     next/font CSS variables; the safe-fallback chains live here.) */
+  --font-sans:  -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono:  ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  --font-serif: "Times New Roman", Georgia, serif;
 
-  /* ---------- Typography ---------- */
-  /* App chrome: IBM Plex Sans (body) + IBM Plex Mono (numeric/labels).
-     These are overwritten by globals.css to include the next/font variables. */
-  --stk-sans:   "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  --stk-mono:   "IBM Plex Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  /* ── Radii ── */
+  --radius-sm: 4px;
+  --radius:    6px;
+  --radius-md: 8px;
+  --radius-lg: 10px;
 
-  /* ---------- Radii ---------- */
-  --stk-radius-sm:  6px;
-  --stk-radius-md:  10px;
-  --stk-radius-lg:  14px;
-  --stk-radius-xl:  20px;
-
-  /* ---------- Shadows (theme-aware — default = light) ---------- */
-  --stk-shadow-sm:  0 1px 2px rgba(11, 18, 32, 0.04);
-  --stk-shadow-md:  0 4px 12px rgba(11, 18, 32, 0.06), 0 1px 2px rgba(11, 18, 32, 0.04);
-  --stk-shadow-lg:  0 12px 32px rgba(11, 18, 32, 0.10), 0 2px 6px rgba(11, 18, 32, 0.06);
-
-  /* ---------- Teal glow (dark-mode CTA — the 🔥 moment) ---------- */
-  --stk-glow-teal:  0 0 0 1px rgba(79, 199, 188, 0.35), 0 6px 24px rgba(79, 199, 188, 0.28);
-
-  /* ---------- Spacing scale (4px base) ---------- */
-  --stk-space-1:  4px;
-  --stk-space-2:  8px;
-  --stk-space-3:  12px;
-  --stk-space-4:  16px;
-  --stk-space-5:  20px;
-  --stk-space-6:  24px;
-  --stk-space-7:  32px;
-  --stk-space-8:  40px;
-  --stk-space-9:  56px;
-  --stk-space-10: 80px;
+  /* ── Shadows ── */
+  --shadow-card: 0 1px 2px rgba(13, 23, 38, 0.04);
+  --shadow-md:   0 4px 14px rgba(13, 23, 38, 0.06), 0 1px 2px rgba(13, 23, 38, 0.04);
+  --shadow-lg:   0 12px 32px rgba(13, 23, 38, 0.10), 0 2px 6px rgba(13, 23, 38, 0.06);
+  --glow-teal:   0 0 12px rgba(127, 224, 211, 0.35);
 
   /* ============================================================
-     Semantic aliases — LIGHT defaults.
-     These are what Tailwind utilities are backed by (see
-     tokens/tailwind.config.snippet.ts). Overridden under
-     [data-theme="dark"] below.
+     Back-compat aliases (legacy semantic names still referenced
+     by pages that haven't been restyled). Remove these once every
+     route is on the Backstage primitives.
      ============================================================ */
+  --bg:              var(--paper);
+  --bg-warm:         var(--paper-3);
+  --surface:         var(--paper-4);
+  --surface-subtle:  var(--paper-3);
+  --surface-elevated:var(--paper-4);
+  --sidebar:         var(--paper-2);
 
-  /* Surfaces */
-  --bg:              var(--stk-bg);
-  --bg-warm:         var(--stk-bg-warm);
-  --surface:         var(--stk-surface);
-  --surface-subtle:  var(--stk-surface-subtle);
-  --surface-elevated: var(--stk-surface);     /* same as surface in light */
-  --sidebar:         var(--stk-sidebar);
+  --border:          var(--line);
+  --border-soft:     var(--line-soft);
+  --border-strong:   var(--line-strong);
 
-  /* Borders */
-  --border:          var(--stk-border);
-  --border-soft:     var(--stk-border-soft);
-  --border-strong:   var(--stk-border-strong);
+  --text:            var(--ink);
+  --heading:         var(--ink);
+  --muted-light:     var(--muted-2);
 
-  /* Text */
-  --text:            var(--stk-slate);
-  --heading:         var(--stk-navy);          /* section titles + page H1 */
-  --muted:           var(--stk-muted);
-  --muted-light:     var(--stk-muted-light);
+  --link:            var(--teal);
+  --teal-deep:       var(--teal);
+  --teal-soft:       rgba(47, 162, 154, 0.10);
 
-  /* Brand-adjacent semantic hooks */
-  --bg-elevated:     var(--stk-white);         /* legacy alias kept for back-compat */
-  --brand:           var(--stk-navy);
-  --brand-accent:    var(--stk-teal-1);
-  --link:            var(--stk-teal);
-  --cta-bg:          var(--stk-navy);
-  --cta-fg:          var(--stk-white);
+  --warning:         var(--amber);
+  --warning-soft:    var(--amber-tint);
+  --warning-text:    var(--amber);
+  --warning-border:  rgba(201, 123, 63, 0.30);
+  --critical:        var(--danger);
+  --critical-soft:   var(--danger-tint);
+  --critical-text:   var(--danger);
+  --critical-border: rgba(178, 59, 45, 0.30);
+  --success:         #1FA06E;
+  --success-soft:    rgba(31, 160, 110, 0.12);
+  --success-text:    #1FA06E;
+  --success-border:  rgba(31, 160, 110, 0.30);
 
-  /* Tinted aliases used for active-nav count pills etc. */
-  --teal-soft:       #E6F6F4;
-  --teal-deep:       #1F7A73;
-
-  /* Severity — base + soft/text aliases. These flip per theme so that
-     warning-soft banners, critical-soft error chips, success pills, etc.
-     don't dump a cream/pink light-mode fill onto a dark surface. The base
-     hue (`--warning` / `--critical` / `--success`) also brightens a touch
-     in dark mode to read as a signal against deep chrome. Light defaults
-     point to the raw tokens so light mode is unchanged. */
-  --warning:         var(--stk-warning);
-  --warning-soft:    var(--stk-warning-soft);
-  --warning-text:    var(--stk-warning-text);
-  --warning-border:  #FBD899;
-  --critical:        var(--stk-critical);
-  --critical-soft:   var(--stk-critical-soft);
-  --critical-text:   var(--stk-critical-text);
-  --critical-border: #FCA5A5;
-  --success:         var(--stk-success);
-  --success-soft:    var(--stk-success-soft);
-  --success-text:    var(--stk-success-text);
-  --success-border:  #86EFAC;
-
-  /* Legacy line aliases — keep for any callers still using `var(--line)`. */
-  --line:            var(--stk-border-soft);
-  --line-strong:     var(--stk-border-strong);
+  /* Legacy --stk-* shadow tokens — kept while components still reference them. */
+  --stk-shadow-sm:   var(--shadow-card);
+  --stk-shadow-md:   var(--shadow-md);
+  --stk-shadow-lg:   var(--shadow-lg);
+  --stk-glow-teal:   var(--glow-teal);
 }
 
 /* ============================================================
-   Dark mode — inverted surface hierarchy.
-   Sidebar is DARKER than bg (chrome recedes — intentionally
-   inverted from light, where sidebar is slightly darker-grey
-   and bg is near-white).
-   Activated via [data-theme="dark"] on <html>.
-   Also honored via prefers-color-scheme below when no override
-   is set. Both selectors repeat the same overrides; keep in sync.
+   Dark mode — Midnight palette.
+   Sourced from backstage-handoff/dark-mode/backstage-dark.jsx
+   (Direction A — Midnight). Warm-ink dark ground, mint glow,
+   serif h1 retained.
    ============================================================ */
 [data-theme="dark"] {
-  /* Surfaces */
-  --bg:              var(--stk-dark-bg);
-  --bg-warm:         var(--stk-dark-bg-warm);
-  --surface:         var(--stk-dark-surface);
-  --surface-subtle:  var(--stk-dark-bg);        /* topbar blends into bg in dark */
-  --surface-elevated: var(--stk-dark-surface-elev);
-  --sidebar:         var(--stk-dark-sidebar);
+  /* Surfaces — naming flipped intentionally: in dark, paper-2 is
+     darker than paper (sidebar recedes deeper than page bg),
+     paper-3/4 lift above page bg (hover, cards). */
+  --paper:    #0F141C;
+  --paper-2:  #0B1018;
+  --paper-3:  #161D28;
+  --paper-4:  #1A2330;
 
-  /* Borders */
-  --border:          var(--stk-dark-border);
-  --border-soft:     var(--stk-dark-border-soft);
-  --border-strong:   var(--stk-dark-border-strong);
+  /* Text — warm off-white, retains the "paper" feeling. */
+  --ink:      #ECEAE3;
+  --ink-2:    #B4BAC6;
+  --muted:    #7E889A;
+  --muted-2:  #5A6478;
 
-  /* Text */
-  --text:            var(--stk-dark-text);
-  --heading:         var(--stk-dark-heading);
-  --muted:           var(--stk-dark-muted);
-  --muted-light:     var(--stk-dark-muted-light);
+  /* Brand — teal lifts to mid-teal, mint stays mint and is used
+     more prominently for accents (active nav, KPI bar, status pill). */
+  --teal:     #4FC7BC;
+  --teal-1:   #4FC7BC;
+  --teal-2:   #7FE0D3;
+  --mint:     #7FE0D3;
 
-  /* Brand-adjacent */
-  --bg-elevated:     var(--stk-dark-surface);
-  --brand:           var(--stk-teal-2);
-  --brand-accent:    var(--stk-teal-2);
-  --link:            var(--stk-teal-2);
-  --cta-bg:          linear-gradient(180deg, var(--stk-teal-1), var(--stk-teal));
-  --cta-fg:          #05201F;
-  --cta-shadow:      var(--stk-glow-teal);
+  /* Status — amber lifts for dark contrast. */
+  --amber:    #E0A36A;
+  --amber-tint: rgba(224, 163, 106, 0.12);
+  --danger:   #F87171;
+  --danger-tint: rgba(248, 113, 113, 0.10);
 
-  /* Tinted aliases — darker versions so they read against dark surfaces. */
-  --teal-soft:       var(--stk-dark-teal-soft);
-  --teal-deep:       var(--stk-teal-2);
+  /* Lines — subtle white tints. */
+  --line:        rgba(255, 255, 255, 0.06);
+  --line-soft:   rgba(255, 255, 255, 0.04);
+  --line-strong: rgba(255, 255, 255, 0.10);
 
-  /* Severity — dark values sourced from handoff/mockups/mockup_tools_dark.html
-     pending-banner + status-pill rules. Soft fills are low-alpha tints of the
-     severity hue so they sit correctly on the dark surface; *-text uses the
-     bright variant of the hue so pills still read as signal. */
-  --warning:         #FBBF24;
-  --warning-soft:    rgba(251, 191, 36, 0.10);
-  --warning-text:    #FBBF24;
-  --warning-border:  rgba(251, 191, 36, 0.25);
+  /* RGB triplets — teal-1 in dark uses MINT rgb, so `bg-teal-1/10`
+     renders as a mint tint on dark surfaces. */
+  --paper-rgb:   15 20 28;
+  --ink-rgb:     236 234 227;
+  --ink-2-rgb:   180 186 198;
+  --muted-rgb:   126 136 154;
+  --teal-rgb:    79 199 188;
+  --teal-1-rgb:  127 224 211;
+  --teal-2-rgb:  127 224 211;
+  --mint-rgb:    127 224 211;
+  --amber-rgb:   224 163 106;
+  --danger-rgb:  248 113 113;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.32);
+  --shadow-md:   0 4px 14px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.20);
+  --shadow-lg:   0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.28);
+  --glow-teal:   0 0 16px rgba(127, 224, 211, 0.50);
+
+  /* Back-compat overrides */
+  --teal-soft:       rgba(127, 224, 211, 0.10);
+  --warning:         #E0A36A;
+  --warning-soft:    rgba(224, 163, 106, 0.12);
+  --warning-text:    #E0A36A;
+  --warning-border:  rgba(224, 163, 106, 0.30);
   --critical:        #F87171;
-  --critical-soft:   rgba(248, 113, 113, 0.12);
-  --critical-text:   #FCA5A5;
+  --critical-soft:   rgba(248, 113, 113, 0.10);
+  --critical-text:   #F87171;
   --critical-border: rgba(248, 113, 113, 0.30);
   --success:         #4ADE80;
   --success-soft:    rgba(74, 222, 128, 0.12);
   --success-text:    #4ADE80;
   --success-border:  rgba(74, 222, 128, 0.30);
 
-  /* Legacy line aliases */
-  --line:            var(--stk-dark-border-soft);
-  --line-strong:     var(--stk-dark-border-strong);
-
-  /* Shadows — deeper + more opaque on dark */
-  --stk-shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.24);
-  --stk-shadow-md:   0 4px 14px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.20);
-  --stk-shadow-lg:   0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.28);
+  --stk-shadow-sm:   var(--shadow-card);
+  --stk-shadow-md:   var(--shadow-md);
+  --stk-shadow-lg:   var(--shadow-lg);
+  --stk-glow-teal:   var(--glow-teal);
 }
 
-/* prefers-color-scheme fallback — only applies when the user
-   hasn't made an explicit choice (i.e. no data-theme="light").
-   next-themes with attribute="data-theme" and enableSystem will
-   apply [data-theme="dark"] directly when system is the active
-   preference, but we still want this fallback for pages rendered
-   before hydration (flash-of-wrong-theme guard). */
+/* prefers-color-scheme fallback — applies before next-themes
+   hydrates and writes [data-theme] on <html>. Same overrides as
+   [data-theme="dark"]; keep in sync. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) {
-    --bg:              var(--stk-dark-bg);
-    --bg-warm:         var(--stk-dark-bg-warm);
-    --surface:         var(--stk-dark-surface);
-    --surface-subtle:  var(--stk-dark-bg);
-    --surface-elevated: var(--stk-dark-surface-elev);
-    --sidebar:         var(--stk-dark-sidebar);
-    --border:          var(--stk-dark-border);
-    --border-soft:     var(--stk-dark-border-soft);
-    --border-strong:   var(--stk-dark-border-strong);
-    --text:            var(--stk-dark-text);
-    --heading:         var(--stk-dark-heading);
-    --muted:           var(--stk-dark-muted);
-    --muted-light:     var(--stk-dark-muted-light);
-    --bg-elevated:     var(--stk-dark-surface);
-    --brand:           var(--stk-teal-2);
-    --brand-accent:    var(--stk-teal-2);
-    --link:            var(--stk-teal-2);
-    --cta-bg:          linear-gradient(180deg, var(--stk-teal-1), var(--stk-teal));
-    --cta-fg:          #05201F;
-    --cta-shadow:      var(--stk-glow-teal);
-    --teal-soft:       var(--stk-dark-teal-soft);
-    --teal-deep:       var(--stk-teal-2);
-    --warning:         #FBBF24;
-    --warning-soft:    rgba(251, 191, 36, 0.10);
-    --warning-text:    #FBBF24;
-    --warning-border:  rgba(251, 191, 36, 0.25);
+    --paper:    #0F141C;
+    --paper-2:  #0B1018;
+    --paper-3:  #161D28;
+    --paper-4:  #1A2330;
+
+    --ink:      #ECEAE3;
+    --ink-2:    #B4BAC6;
+    --muted:    #7E889A;
+    --muted-2:  #5A6478;
+
+    --teal:     #4FC7BC;
+    --teal-1:   #4FC7BC;
+    --teal-2:   #7FE0D3;
+    --mint:     #7FE0D3;
+
+    --amber:    #E0A36A;
+    --amber-tint: rgba(224, 163, 106, 0.12);
+    --danger:   #F87171;
+    --danger-tint: rgba(248, 113, 113, 0.10);
+
+    --line:        rgba(255, 255, 255, 0.06);
+    --line-soft:   rgba(255, 255, 255, 0.04);
+    --line-strong: rgba(255, 255, 255, 0.10);
+
+    --paper-rgb:   15 20 28;
+    --ink-rgb:     236 234 227;
+    --ink-2-rgb:   180 186 198;
+    --muted-rgb:   126 136 154;
+    --teal-rgb:    79 199 188;
+    --teal-1-rgb:  127 224 211;
+    --teal-2-rgb:  127 224 211;
+    --mint-rgb:    127 224 211;
+    --amber-rgb:   224 163 106;
+    --danger-rgb:  248 113 113;
+
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.32);
+    --shadow-md:   0 4px 14px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.20);
+    --shadow-lg:   0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.28);
+    --glow-teal:   0 0 16px rgba(127, 224, 211, 0.50);
+
+    --teal-soft:       rgba(127, 224, 211, 0.10);
+    --warning:         #E0A36A;
+    --warning-soft:    rgba(224, 163, 106, 0.12);
+    --warning-text:    #E0A36A;
+    --warning-border:  rgba(224, 163, 106, 0.30);
     --critical:        #F87171;
-    --critical-soft:   rgba(248, 113, 113, 0.12);
-    --critical-text:   #FCA5A5;
+    --critical-soft:   rgba(248, 113, 113, 0.10);
+    --critical-text:   #F87171;
     --critical-border: rgba(248, 113, 113, 0.30);
     --success:         #4ADE80;
     --success-soft:    rgba(74, 222, 128, 0.12);
     --success-text:    #4ADE80;
     --success-border:  rgba(74, 222, 128, 0.30);
-    --line:            var(--stk-dark-border-soft);
-    --line-strong:     var(--stk-dark-border-strong);
-    --stk-shadow-sm:   0 1px 2px rgba(0, 0, 0, 0.24);
-    --stk-shadow-md:   0 4px 14px rgba(0, 0, 0, 0.32), 0 1px 2px rgba(0, 0, 0, 0.20);
-    --stk-shadow-lg:   0 16px 40px rgba(0, 0, 0, 0.45), 0 2px 8px rgba(0, 0, 0, 0.28);
+
+    --stk-shadow-sm:   var(--shadow-card);
+    --stk-shadow-md:   var(--shadow-md);
+    --stk-shadow-lg:   var(--shadow-lg);
+    --stk-glow-teal:   var(--glow-teal);
   }
 }
 
 /* ============================================================
-   Base styles — use as a starting point for globals.css.
+   Base styles — minimal. Most chrome is set in globals.css.
    ============================================================ */
 
-html, body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--stk-sans);
-  -webkit-font-smoothing: antialiased;
-  letter-spacing: -0.005em;
-}
-
-.stk-mono { font-family: var(--stk-mono); }
+.stk-mono { font-family: var(--font-mono); }

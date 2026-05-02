@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/backstage";
 import { AiClassifyModal } from "./AiClassifyModal";
 import { NewTemplateModal } from "./NewTemplateModal";
 
@@ -10,25 +11,14 @@ export function TemplatesHeaderActions() {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setClassifyOpen(true)}
-        className="px-3 py-1.5 border border-border rounded-md text-sm bg-surface text-slate hover:bg-bg-warm"
-      >
+      <Button variant="default" onClick={() => setClassifyOpen(true)}>
         ⚡ AI Classify domain…
-      </button>
-      <button
-        type="button"
-        onClick={() => setNewOpen(true)}
-        className="px-3 py-1.5 rounded-md text-sm bg-navy text-white hover:bg-ink"
-      >
+      </Button>
+      <Button variant="primary" onClick={() => setNewOpen(true)}>
         + New template
-      </button>
+      </Button>
 
-      <AiClassifyModal
-        open={classifyOpen}
-        onClose={() => setClassifyOpen(false)}
-      />
+      <AiClassifyModal open={classifyOpen} onClose={() => setClassifyOpen(false)} />
       <NewTemplateModal open={newOpen} onClose={() => setNewOpen(false)} />
     </>
   );
