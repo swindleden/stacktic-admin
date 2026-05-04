@@ -1,0 +1,80 @@
+# Manual production deploy.
+#
+# Trigger: GitHub UI → Actions → "Deploy to Production" → Run workflow.
+#
+# site-admin has no worker tier — backstage is web-only. So this is just
+# the Vercel deploy step (sibling to site-app's combined Vercel + Railway
+# workflow).
+#
+# Required GitHub repository secrets (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN            — vercel.com/account/tokens (shared across envs)
+#   VERCEL_ORG_ID           — your Vercel account/team id (shared across envs)
+#   VERCEL_PROJECT_ID_PROD  — stacktic-admin-prod's Vercel project id
+
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "DEPLOY" to confirm production release'
+        required: true
+        default: ''
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_PROD }}
+
+jobs:
+  deploy:
+    name: Deploy main → stacktic-admin-prod
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Confirm
+        if: github.event.inputs.confirm != 'DEPLOY'
+        run: |
+          echo "::error::You must type DEPLOY in the confirm field. Aborting."
+          exit 1
+
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # GitHub Actions runners need explicit Node + pnpm setup; Vercel's
+      # build step calls out to pnpm based on package.json's packageManager.
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        # Version comes from package.json's packageManager field.
+        uses: pnpm/action-setup@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Build remotely on Vercel infrastructure (env vars natively available).
+      # --build-env VERCEL_FORCE_DEPLOY=1 makes the Ignored Build Step proceed.
+      - name: Vercel deploy
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prod \
+            --build-env VERCEL_FORCE_DEPLOY=1 \
+            --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $URL"
+
+      - name: Summary
+        run: |
+          {
+            echo "## ✅ Production deploy complete"
+            echo ""
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Triggered by: @${{ github.actor }}"
+            echo "- Deploy URL: ${{ steps.deploy.outputs.url }}"
+            echo "- Live: https://backstage.stacktic.app"
+          } >> "$GITHUB_STEP_SUMMARY"
