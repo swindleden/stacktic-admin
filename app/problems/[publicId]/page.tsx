@@ -32,7 +32,7 @@ export default async function ProblemDetailPage({ params }: Props) {
       <Frame>
         <EmptyState
           title="Database not configured"
-          body="Configure DATABASE_URL_DIRECT to view problems."
+          body="Configure DATABASE_URL to view problems."
         />
       </Frame>
     );

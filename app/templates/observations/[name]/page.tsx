@@ -30,7 +30,7 @@ export default async function ObservationDetailPage({ params }: Props) {
       <Frame>
         <EmptyState
           title="Database not configured"
-          body="Configure DATABASE_URL_DIRECT to load observations."
+          body="Configure DATABASE_URL to load observations."
         />
       </Frame>
     );

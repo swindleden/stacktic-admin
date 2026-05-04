@@ -53,7 +53,7 @@ export default async function CompanyProfilePage({
       <Frame>
         <EmptyState
           title="Database not configured"
-          body="Configure DATABASE_URL_DIRECT to view company profiles."
+          body="Configure DATABASE_URL to view company profiles."
         />
       </Frame>
     );

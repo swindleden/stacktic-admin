@@ -36,7 +36,7 @@ const STALE_LOCK_INTERVAL = "5 minutes";
 function notConfigured(): JobActionResult {
   return {
     ok: false,
-    message: "Database not configured — set DATABASE_URL_DIRECT in .env.local.",
+    message: "Database not configured — set DATABASE_URL in .env.local.",
   };
 }
 

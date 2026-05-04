@@ -1,15 +1,18 @@
 /**
  * Postgres client for site-admin.
  *
- * Same connection-string conventions as site-app:
- *   DATABASE_URL_DIRECT — direct Postgres (port 5432). Preferred for the
- *                         operator console because we run a small number of
- *                         heavy reads + ad-hoc joins; the session pooler
- *                         (5432) gives us prepared-statement support and a
- *                         stable connection.
- *   DATABASE_URL        — pooled via Supavisor (port 6543). Falls back here
- *                         if _DIRECT isn't set. `prepare: false` is required
- *                         when going through the transaction pooler.
+ * Connection-string convention:
+ *   DATABASE_URL         — primary, the only one we actually want set.
+ *                          Locally points at Supabase containers (5432).
+ *                          On Vercel points at Supavisor's pooler. The
+ *                          web tier on Vercel uses the transaction pooler
+ *                          (6543) because backstage is a stateless reader
+ *                          under serverless concurrency; that's the right
+ *                          shape for Vercel.
+ *   DATABASE_URL_DIRECT  — DEPRECATED legacy fallback. Read for one
+ *                          rename cycle so we don't break in-flight
+ *                          deploys. Remove the fallback in a follow-up
+ *                          once Vercel env vars are migrated.
  *
  * site-admin reads and writes directly. Most surfaces are read-only today,
  * but the operator console is allowed to correct data when needed. Defense-
@@ -28,8 +31,11 @@ declare global {
 }
 
 function pickConnectionString(): string | null {
+  // Prefer DATABASE_URL (the new canonical name). DATABASE_URL_DIRECT is
+  // a transitional fallback — remove once env vars across all deploy
+  // targets have been migrated.
   return (
-    process.env.DATABASE_URL_DIRECT ?? process.env.DATABASE_URL ?? null
+    process.env.DATABASE_URL ?? process.env.DATABASE_URL_DIRECT ?? null
   );
 }
 
