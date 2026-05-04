@@ -1,0 +1,69 @@
+# Manual Dev deploy.
+#
+# Trigger: GitHub UI → Actions → "Deploy to Dev" → Run workflow.
+#
+# site-admin has no worker tier — backstage is web-only.
+#
+# Why manual on Dev (not auto-on-push): during heavy build phase we ship
+# many small PRs to main; auto-deploying every merge churns Vercel
+# unnecessarily. PR previews on Vercel are still automatic, so per-change
+# visual checks aren't lost.
+#
+# No "DEPLOY" confirmation here — Dev is low-stakes; one click ships.
+#
+# Required GitHub repository secrets (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN           — vercel.com/account/tokens (shared across envs)
+#   VERCEL_ORG_ID          — your Vercel account/team id (shared across envs)
+#   VERCEL_PROJECT_ID_DEV  — stacktic-admin-dev's Vercel project id
+
+name: Deploy to Dev
+
+on:
+  workflow_dispatch:
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DEV }}
+
+jobs:
+  deploy:
+    name: Deploy main → stacktic-admin-dev
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      - name: Vercel deploy
+        id: deploy
+        run: |
+          URL=$(vercel deploy --prod \
+            --build-env VERCEL_FORCE_DEPLOY=1 \
+            --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $URL"
+
+      - name: Summary
+        run: |
+          {
+            echo "## ✅ Dev deploy complete"
+            echo ""
+            echo "- Commit: \`${{ github.sha }}\`"
+            echo "- Triggered by: @${{ github.actor }}"
+            echo "- Deploy URL: ${{ steps.deploy.outputs.url }}"
+            echo "- Live: https://backstage.stacktic.dev"
+          } >> "$GITHUB_STEP_SUMMARY"
