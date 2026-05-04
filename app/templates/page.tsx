@@ -123,7 +123,7 @@ export default async function TemplatesPage({ searchParams }: Props) {
       {!dbConfigured ? (
         <EmptyState
           title="Database not configured"
-          body="Configure DATABASE_URL_DIRECT to load templates."
+          body="Configure DATABASE_URL to load templates."
         />
       ) : tab === "approved" ? (
         <ApprovedTab sp={sp} q={q} sort={sort} page={page} />

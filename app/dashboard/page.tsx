@@ -52,7 +52,7 @@ export default async function DashboardPage() {
           title="Database not configured"
           body={
             <>
-              Set <code className="stk-mono">DATABASE_URL_DIRECT</code> in
+              Set <code className="stk-mono">DATABASE_URL</code> in
               <code className="stk-mono"> .env.local</code> and restart the dev
               server. Once connected, this page becomes your daily landing.
             </>

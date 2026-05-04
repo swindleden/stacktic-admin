@@ -63,7 +63,7 @@ export default async function ProblemsPage({ searchParams }: Props) {
       {!dbConfigured ? (
         <EmptyState
           title="Database not configured"
-          body="Configure DATABASE_URL_DIRECT to load problems."
+          body="Configure DATABASE_URL to load problems."
         />
       ) : listing.rows.length === 0 ? (
         <EmptyState

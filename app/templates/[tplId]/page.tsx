@@ -36,7 +36,7 @@ export default async function TemplateDetailPage({
       <Frame>
         <EmptyState
           title="Database not configured"
-          body="Configure DATABASE_URL_DIRECT to view templates."
+          body="Configure DATABASE_URL to view templates."
         />
       </Frame>
     );

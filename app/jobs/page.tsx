@@ -48,7 +48,7 @@ export default async function JobsPage() {
           title="Database not configured"
           body={
             <>
-              Set <code className="stk-mono">DATABASE_URL_DIRECT</code> in
+              Set <code className="stk-mono">DATABASE_URL</code> in
               <code className="stk-mono"> .env.local</code> and restart the dev
               server.
             </>
