@@ -41,6 +41,8 @@ export const config = {
    *   - /login            (the sign-in page itself)
    *   - /api/auth/*       (Auth.js handlers — must be reachable when
    *                        unauthenticated to complete the OAuth flow)
+   *   - /api/health       (ALB target-group health probe; must return
+   *                        200 inline or ECS cycles the task forever)
    *   - /_next/static/*   (Next's compiled JS/CSS bundles)
    *   - /_next/image/*    (image optimizer)
    *   - /favicon*         (browser-requested icons; pre-auth)
@@ -51,6 +53,6 @@ export const config = {
    * "match any path that does NOT start with the listed segments."
    */
   matcher: [
-    "/((?!login|api/auth|_next/static|_next/image|favicon|brand|apple-touch-icon).*)",
+    "/((?!login|api/auth|api/health|_next/static|_next/image|favicon|brand|apple-touch-icon).*)",
   ],
 };

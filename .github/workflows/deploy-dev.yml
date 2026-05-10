@@ -1,35 +1,47 @@
-# Manual Dev deploy.
+# Manual Dev deploy for site-admin (Backstage).
 #
 # Trigger: GitHub UI → Actions → "Deploy to Dev" → Run workflow.
 #
-# site-admin has no worker tier — backstage is web-only.
+# Builds the site-admin image, pushes to ECR, and force-redeploys the
+# stacktic-dev-site-admin ECS Fargate service.
 #
-# Why manual on Dev (not auto-on-push): during heavy build phase we ship
-# many small PRs to main; auto-deploying every merge churns Vercel
-# unnecessarily. PR previews on Vercel are still automatic, so per-change
-# visual checks aren't lost.
+# Why manual (not auto-on-push): during heavy build phase we ship many
+# small PRs to main; auto-deploying every merge churns ECS unnecessarily.
+# Use this workflow when you want the Dev-deployed Backstage to update.
 #
-# No "DEPLOY" confirmation here — Dev is low-stakes; one click ships.
+# No "DEPLOY" confirmation — Dev is low-stakes; one click ships.
 #
-# Required GitHub repository secrets (Settings → Secrets and variables → Actions):
-#   VERCEL_TOKEN           — vercel.com/account/tokens (shared across envs)
-#   VERCEL_ORG_ID          — your Vercel account/team id (shared across envs)
-#   VERCEL_PROJECT_ID_DEV  — stacktic-admin-dev's Vercel project id
+# AWS auth: OIDC federation. The deploy IAM role's trust policy requires
+# this workflow to be running on the main branch of swindleden/stacktic-admin.
+# No long-lived AWS keys in GitHub secrets.
+#
+# Image-tag pattern: build pushes both :<commit-sha> (immutable, for
+# rollback) and :dev (mutable, what the ECS task definition references).
+# Force-redeploy makes ECS pull the now-updated :dev tag.
 
 name: Deploy to Dev
 
 on:
   workflow_dispatch:
 
+permissions:
+  id-token: write   # required to fetch the OIDC token
+  contents: read
+
 env:
-  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_DEV }}
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "683146427030"
+  DEPLOY_ROLE_ARN: arn:aws:iam::683146427030:role/stacktic-dev-site-admin-deploy
+  ECR_BASE: 683146427030.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPO: stacktic-site-admin
+  ECS_CLUSTER: stacktic-dev-cluster
+  ECS_SERVICE: stacktic-dev-site-admin
 
 jobs:
   deploy:
-    name: Deploy main → stacktic-admin-dev
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
+    name: Build → ECR → Fargate (Dev)
+    runs-on: ubuntu-24.04-arm   # native ARM64 build, no QEMU emulation
+    timeout-minutes: 20
 
     steps:
       - name: Checkout main
@@ -37,33 +49,72 @@ jobs:
         with:
           ref: main
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          node-version: '20'
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Install Vercel CLI
-        run: npm install -g vercel@latest
-
-      - name: Vercel deploy
-        id: deploy
+      - name: Login to ECR
         run: |
-          URL=$(vercel deploy --prod \
-            --build-env VERCEL_FORCE_DEPLOY=1 \
-            --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "Deployed: $URL"
+          aws ecr get-login-password --region "$AWS_REGION" | \
+            docker login --username AWS --password-stdin "$ECR_BASE"
+
+      - name: Build image
+        run: |
+          SHA=$(git rev-parse --short HEAD)
+          echo "SHA=$SHA" >> "$GITHUB_ENV"
+          echo "Building $ECR_REPO:$SHA"
+          docker build -t "$ECR_REPO:$SHA" .
+
+      - name: Tag and push to ECR
+        run: |
+          docker tag "$ECR_REPO:$SHA" "$ECR_BASE/$ECR_REPO:$SHA"
+          docker tag "$ECR_REPO:$SHA" "$ECR_BASE/$ECR_REPO:dev"
+          docker push "$ECR_BASE/$ECR_REPO:$SHA"
+          docker push "$ECR_BASE/$ECR_REPO:dev"
+          echo "✓ pushed $ECR_REPO:$SHA + $ECR_REPO:dev"
+
+      - name: Force redeploy ECS service
+        run: |
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --force-new-deployment \
+            --query 'service.deployments[0].{Status:status,RolloutState:rolloutState}' \
+            --output text
+          echo "→ redeploying $ECS_SERVICE"
+
+      - name: Wait for service to stabilize
+        run: |
+          echo "Waiting for $ECS_SERVICE to reach steady state..."
+          aws ecs wait services-stable \
+            --cluster "$ECS_CLUSTER" \
+            --services "$ECS_SERVICE"
+          echo "✓ Service stable."
+
+      - name: Smoke test
+        run: |
+          echo "Hitting Dev backstage /api/health..."
+          CODE=$(curl -sk -o /dev/null -w "%{http_code}" "https://backstage.stacktic.dev/api/health" || echo "000")
+          echo "  backstage.stacktic.dev: HTTP $CODE"
+          if [[ "$CODE" != "200" ]]; then
+            echo "❌ Smoke test failed"
+            exit 1
+          fi
+          echo "✓ Endpoint returned 200"
 
       - name: Summary
         run: |
           {
             echo "## ✅ Dev deploy complete"
-            echo ""
-            echo "- Commit: \`${{ github.sha }}\`"
-            echo "- Triggered by: @${{ github.actor }}"
-            echo "- Deploy URL: ${{ steps.deploy.outputs.url }}"
-            echo "- Live: https://backstage.stacktic.dev"
+            echo
+            echo "- **Commit**: \`${{ github.sha }}\`"
+            echo "- **Image SHA**: \`$SHA\`"
+            echo "- **Cluster**: \`$ECS_CLUSTER\`"
+            echo "- **Service**: \`$ECS_SERVICE\`"
+            echo "- **URL**: https://backstage.stacktic.dev"
+            echo "- **Triggered by**: @${{ github.actor }}"
+            echo
+            echo "**Rollback**: run this workflow on a previous commit, or manually re-tag a previous \`:<sha>\` as \`:dev\` and force redeploy."
           } >> "$GITHUB_STEP_SUMMARY"
