@@ -12,9 +12,12 @@ const nextConfig = {
   poweredByHeader: false,
   typedRoutes: true,
 
-  env: {
-    STACKTIC_ADMIN_URL: process.env.STACKTIC_ADMIN_URL ?? "http://localhost:3100",
-  },
+  // STACKTIC_ADMIN_URL is read at runtime via process.env directly.
+  // Don't put it in next.config's `env` block — that block inlines values
+  // into both client AND server bundles at BUILD time, which means a
+  // Docker image built without the right STACKTIC_ADMIN_URL bakes in
+  // localhost:3100 and ignores whatever ECS sets at runtime. Same fix
+  // as site-app/next.config.mjs's STACKTIC_APP_URL handling.
 
   // Health check must respond inline. No caching.
   async headers() {
