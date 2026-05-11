@@ -1,27 +1,18 @@
 /**
  * Postgres client for site-admin.
  *
- * Connection-string convention:
- *   DATABASE_URL         — primary, the only one we actually want set.
- *                          Locally points at Supabase containers (5432).
- *                          On Vercel points at Supavisor's pooler. The
- *                          web tier on Vercel uses the transaction pooler
- *                          (6543) because backstage is a stateless reader
- *                          under serverless concurrency; that's the right
- *                          shape for Vercel.
- *   DATABASE_URL_DIRECT  — DEPRECATED legacy fallback. Read for one
- *                          rename cycle so we don't break in-flight
- *                          deploys. Remove the fallback in a follow-up
- *                          once Vercel env vars are migrated.
+ * Single connection string: DATABASE_URL. Local dev points at the
+ * postgres container; deployed envs point at the AWS RDS instance via
+ * the db.stacktic.<tld> Route 53 alias.
  *
  * site-admin reads and writes directly. Most surfaces are read-only today,
  * but the operator console is allowed to correct data when needed. Defense-
  * in-depth sits at the auth layer (Stacktic Workspace SSO), not the DB role.
  * Schema migrations still happen only in site-app.
  *
- * Graceful no-config state: when neither URL is set we export `null` so
- * pages can render an empty "configure DB" state instead of crashing on
- * import. Useful for first-time local-dev runs and for previews.
+ * Graceful no-config state: when DATABASE_URL isn't set we export `null`
+ * so pages can render an empty "configure DB" state instead of crashing
+ * on import. Useful for first-time local-dev runs.
  */
 import postgres from "postgres";
 
@@ -31,12 +22,7 @@ declare global {
 }
 
 function pickConnectionString(): string | null {
-  // Prefer DATABASE_URL (the new canonical name). DATABASE_URL_DIRECT is
-  // a transitional fallback — remove once env vars across all deploy
-  // targets have been migrated.
-  return (
-    process.env.DATABASE_URL ?? process.env.DATABASE_URL_DIRECT ?? null
-  );
+  return process.env.DATABASE_URL ?? null;
 }
 
 function makeClient(): ReturnType<typeof postgres> | null {
