@@ -33,10 +33,14 @@ function makeClient(): ReturnType<typeof postgres> | null {
     max: 5,
     idle_timeout: 20,
     connect_timeout: 10,
-    // prepare:false matches site-app's web-tier pattern. Safe in both pooled
-    // and direct modes; required when DATABASE_URL points at the Supavisor
-    // transaction pooler (6543). No measurable perf cost at our scale.
     prepare: false,
+    // RDS presents a TLS cert valid for its AWS-generated hostname, but
+    // we connect via the stable db.stacktic.<tld> Route 53 alias. The
+    // hostname mismatch fails verify-full (postgres-js's default once
+    // TLS is engaged). Disable cert chain verification — TLS still
+    // encrypts, we just don't check the chain. Matches site-app's
+    // lib/db/client.ts and the worker's pg.Pool config.
+    ssl: { rejectUnauthorized: false },
     types: {
       // Override postgres-js's default OID-1114 (`timestamp without time
       // zone`) parser. Default is `new Date(value)` where `value` is a
