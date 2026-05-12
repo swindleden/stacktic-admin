@@ -25,6 +25,21 @@ function pickConnectionString(): string | null {
   return process.env.DATABASE_URL ?? null;
 }
 
+// Hosted Dev/Prod (AWS RDS via db.stacktic.<tld>) speaks TLS but with
+// a hostname mismatch that forces us to skip cert verification. Local
+// Supabase Postgres (54322) and docker-compose Postgres don't speak
+// TLS at all. Branch on hostname so one config path works in both
+// worlds. Mirrors site-app's sslForUrl().
+function sslForUrl(url: string): { rejectUnauthorized: false } | false {
+  try {
+    const h = new URL(url).hostname;
+    if (h === "localhost" || h === "127.0.0.1" || h === "::1") return false;
+  } catch {
+    /* fall through to hosted default */
+  }
+  return { rejectUnauthorized: false };
+}
+
 function makeClient(): ReturnType<typeof postgres> | null {
   const url = pickConnectionString();
   if (!url) return null;
@@ -34,13 +49,16 @@ function makeClient(): ReturnType<typeof postgres> | null {
     idle_timeout: 20,
     connect_timeout: 10,
     prepare: false,
-    // RDS presents a TLS cert valid for its AWS-generated hostname, but
-    // we connect via the stable db.stacktic.<tld> Route 53 alias. The
-    // hostname mismatch fails verify-full (postgres-js's default once
-    // TLS is engaged). Disable cert chain verification — TLS still
-    // encrypts, we just don't check the chain. Matches site-app's
-    // lib/db/client.ts and the worker's pg.Pool config.
-    ssl: { rejectUnauthorized: false },
+    // Hosted Dev/Prod: RDS presents a TLS cert valid for its AWS-
+    // generated hostname, but we connect via the stable
+    // db.stacktic.<tld> Route 53 alias. The hostname mismatch fails
+    // verify-full (postgres-js's default once TLS is engaged). Disable
+    // cert chain verification — TLS still encrypts, we just don't
+    // check the chain. Matches site-app's lib/db/client.ts and the
+    // worker's pg.Pool config.
+    // Local: Supabase CLI Postgres doesn't speak TLS; sslForUrl()
+    // returns `false` so the driver connects plaintext.
+    ssl: sslForUrl(url),
     types: {
       // Override postgres-js's default OID-1114 (`timestamp without time
       // zone`) parser. Default is `new Date(value)` where `value` is a
