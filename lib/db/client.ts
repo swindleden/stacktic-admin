@@ -1,28 +1,32 @@
 /**
  * Postgres client for site-admin.
  *
- * Single connection string: DATABASE_URL. Local dev points at the
- * postgres container; deployed envs point at the AWS RDS instance via
- * the db.stacktic.<tld> Route 53 alias.
+ * Resolves the connection URL via `resolveConnectionString()` —
+ * accepts either a pre-built `DATABASE_URL` (local dev,
+ * Dockerfile build-time placeholder) or discrete `PG*` env vars
+ * (the hosted ECS path, where `PGPASSWORD` comes straight from the
+ * RDS-managed Secrets Manager secret on every task start, so
+ * password rotation lands invisibly). Local dev points at the
+ * postgres container; deployed envs hit AWS RDS via the
+ * `db.stacktic.<tld>` Route 53 alias.
  *
  * site-admin reads and writes directly. Most surfaces are read-only today,
  * but the operator console is allowed to correct data when needed. Defense-
  * in-depth sits at the auth layer (Stacktic Workspace SSO), not the DB role.
  * Schema migrations still happen only in site-app.
  *
- * Graceful no-config state: when DATABASE_URL isn't set we export `null`
- * so pages can render an empty "configure DB" state instead of crashing
- * on import. Useful for first-time local-dev runs.
+ * Graceful no-config state: when no connection info is available we
+ * export `null` so pages can render an empty "configure DB" state
+ * instead of crashing on import. Useful for first-time local-dev
+ * runs. The helper returns `null` rather than throwing for exactly
+ * this reason.
  */
 import postgres from "postgres";
+import { resolveConnectionString } from "./connection";
 
 declare global {
   // eslint-disable-next-line no-var
   var __stk_admin_pg_client: ReturnType<typeof postgres> | undefined;
-}
-
-function pickConnectionString(): string | null {
-  return process.env.DATABASE_URL ?? null;
 }
 
 // Hosted Dev/Prod (AWS RDS via db.stacktic.<tld>) speaks TLS but with
@@ -41,7 +45,7 @@ function sslForUrl(url: string): { rejectUnauthorized: false } | false {
 }
 
 function makeClient(): ReturnType<typeof postgres> | null {
-  const url = pickConnectionString();
+  const url = resolveConnectionString();
   if (!url) return null;
 
   return postgres(url, {
